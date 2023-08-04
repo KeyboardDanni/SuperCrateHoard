@@ -1,0 +1,1 @@
+(()=>{"use strict";window.onload=function(){const t=document.getElementById("game_surface");if(null===t||!t.getContext)throw new Error("Missing canvas");const n=t.getContext("2d");if(null===n)throw new Error("Missing canvas context");n.fillStyle="rgb(128, 128, 128)",n.fillRect(64,64,256,256)}})();

@@ -1,0 +1,6 @@
+/**/*.*
+!src/**/*.ts
+!src/**/*.tsx
+/data_src
+/node_modules
+/static

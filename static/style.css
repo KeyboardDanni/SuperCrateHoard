@@ -1,0 +1,34 @@
+body, html
+{
+    background-color: #222;
+    font-family: "Lato", "Trebuchet MS", sans-serif;
+    color: #CCC;
+}
+
+#container
+{
+    max-width: 970px;
+    margin: 20px auto;
+}
+
+#game
+{
+    text-align: center;
+}
+
+#game_surface
+{
+    display: block;
+    background-color: #000000;
+    border: 1px solid #CCC;
+    margin: 0px auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: -moz-none;
+    -ms-user-select: none;
+}
+
+#stats
+{
+    text-align: right;
+}
