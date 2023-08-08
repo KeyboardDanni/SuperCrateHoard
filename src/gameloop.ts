@@ -2,20 +2,106 @@ import { lerp } from "./util";
 
 const TICKRATE = 1000.0 / 60.0;
 const MAX_PROCESS_TIME = TICKRATE * 2;
-const MIN_LAGLESS_FRAMES_FOR_LERP = 10;
+const MIN_LAGLESS_FRAMES_FOR_LERP = 4;
+
+const VSYNC_SAMPLE_SIZE = 60;
+const VSYNC_SAMPLE_MAX_TIMING = 20.1;
+const VSYNC_SAMPLE_TOLERANCE = 6;
+
+class VsyncMeasurer {
+    timestamp = 0;
+    goodSamples = 0;
+    timings: number[] = [];
+    lastGoodAverage = TICKRATE;
+
+    updateTimings() {
+        const now = performance.now();
+
+        if (this.timestamp <= 0) {
+            this.timestamp = now;
+            return;
+        }
+
+        const timing = now - this.timestamp;
+        this.timestamp = now;
+
+        // Try to avoid sampling if the Vsync clearly took too long
+        if (timing > VSYNC_SAMPLE_MAX_TIMING) {
+            return;
+        }
+
+        if (this.timings.length >= VSYNC_SAMPLE_SIZE) {
+            this.timings.shift();
+        }
+
+        // If this sample is different from the last sample or current raw average,
+        //  either the refresh rate changed or Vsync readings are unreliable.
+        //  Mark samples as bad until we collect enough good data again.
+        //  Even with this system, the detection method isn't 100% reliable
+        //  and may wrongly mark the data as good if there is consistent slowdown
+        //  throwing off the Vsync timings.
+        if (this.timings.length > 0) {
+            if (Math.abs(this.timings[this.timings.length - 1] - timing) > VSYNC_SAMPLE_TOLERANCE ||
+                Math.abs(this.averageRateRaw() - timing) > VSYNC_SAMPLE_TOLERANCE) {
+                this.goodSamples = 0;
+            } else {
+                this.goodSamples += 1;
+            }
+        }
+
+        this.timings.push(timing);
+    }
+
+    averageRateRaw() {
+        let sum = 0;
+
+        for (const timing of this.timings) {
+            sum += timing;
+        }
+
+        return sum / this.timings.length;
+    }
+
+    averageRate() {
+        if (this.hasEnoughSamples()) {
+            this.lastGoodAverage = this.averageRateRaw();
+        }
+
+        return this.lastGoodAverage;
+    }
+
+    shouldLerp() {
+        const rate = this.averageRate();
+
+        return Math.abs(rate - TICKRATE) > 1;
+    }
+
+    hasEnoughSamples() {
+        return this.goodSamples > VSYNC_SAMPLE_SIZE;
+    }
+
+    reset() {
+        this.timestamp = 0;
+        this.goodSamples = 0;
+        this.timings = [];
+    }
+}
 
 export class Gameloop {
-    canvas : HTMLCanvasElement;
-    context : CanvasRenderingContext2D | null;
+    canvas: HTMLCanvasElement;
+    context: CanvasRenderingContext2D | null;
+    vsyncRate = new VsyncMeasurer();
     lastTick = performance.now();
     tickQueue = 0;
     tickCount = 0;
-    framesSinceLastLag = 0;
+    framesSinceLogicLag = 0;
     doDraw = false;
     doLerp = false;
 
     constructor() {
-        this.canvas = <HTMLCanvasElement>document.getElementById("game_surface");
+        this.canvas = <HTMLCanvasElement>(
+            document.getElementById("game_surface")
+        );
 
         if (!this.canvas || !this.canvas.getContext) {
             throw new Error("Missing canvas");
@@ -36,6 +122,8 @@ export class Gameloop {
     }
 
     private timerUpdate() {
+        this.vsyncRate.updateTimings();
+
         this.updateTicks();
         this.draw();
 
@@ -44,15 +132,15 @@ export class Gameloop {
 
     private updateTicks() {
         const updateStart = performance.now();
-        
-        this.tickQueue += (updateStart - this.lastTick);
+
+        this.tickQueue += updateStart - this.lastTick;
         this.lastTick = updateStart;
 
         // Perform game logic catchup as necessary
         while (this.tickQueue >= TICKRATE) {
             this.tick();
-            
-            this.framesSinceLastLag++;
+
+            this.framesSinceLogicLag++;
             this.doDraw = true;
             this.tickQueue -= TICKRATE;
 
@@ -62,15 +150,18 @@ export class Gameloop {
             if (tickEnd - updateStart > MAX_PROCESS_TIME) {
                 this.tickQueue = 0;
                 this.lastTick = tickEnd;
-                this.doLerp = false;
-                this.framesSinceLastLag = 0;
+                this.framesSinceLogicLag = 0;
                 break;
             }
         }
 
-        if (this.framesSinceLastLag >= MIN_LAGLESS_FRAMES_FOR_LERP) {
-            this.doLerp = true;
-        }
+        this.evaluateLerp();
+    }
+
+    private evaluateLerp() {
+        this.doLerp =
+            this.vsyncRate.shouldLerp() &&
+            this.framesSinceLogicLag >= MIN_LAGLESS_FRAMES_FOR_LERP;
     }
 
     private tick() {
@@ -90,8 +181,7 @@ export class Gameloop {
 
         if (this.doLerp) {
             lerpRate = this.tickQueue / TICKRATE;
-        }
-        else {
+        } else {
             lerpRate = 1;
             this.doDraw = false; // Don't draw next frame until a new logic frame comes in
         }
@@ -103,7 +193,5 @@ export class Gameloop {
 
         this.context.fillStyle = "rgb(128, 128, 128)";
         this.context.fillRect(lerp(xPrev, x, lerpRate), 64, 256, 256);
-
-        console.info("Draw");
     }
 }
