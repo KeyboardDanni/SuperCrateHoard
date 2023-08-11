@@ -1,3 +1,4 @@
+import { Renderer } from "./graphics";
 import { Scene } from "./scene";
 
 const TICKRATE = 1000.0 / 60.0;
@@ -88,8 +89,7 @@ class VsyncMeasurer {
 }
 
 export class Gameloop {
-    private canvas: HTMLCanvasElement;
-    private context: CanvasRenderingContext2D | null;
+    private gameRenderer: Renderer = new Renderer();
     private currentScene: Scene = new Scene();
     private pendingSceneFunc: (() => Scene) | null = null;
     private vsyncRate = new VsyncMeasurer();
@@ -99,22 +99,6 @@ export class Gameloop {
     private doDraw = false;
     private doLerp = false;
     private running = false;
-
-    constructor() {
-        this.canvas = <HTMLCanvasElement>(
-            document.getElementById("game_surface")
-        );
-
-        if (!this.canvas || !this.canvas.getContext) {
-            throw new Error("Missing canvas");
-        }
-
-        this.context = this.canvas.getContext("2d");
-
-        if (!this.context) {
-            throw new Error("Could not create canvas context");
-        }
-    }
 
     run() {
         if (this.running) {
@@ -129,15 +113,15 @@ export class Gameloop {
     }
 
     scene() {
-        return this.scene;
+        return this.currentScene;
     }
 
     setScene(func: () => Scene) {
         this.pendingSceneFunc = func;
     }
 
-    drawContextRaw() {
-        return this.context;
+    renderer() {
+        return this.gameRenderer;
     }
 
     private timerUpdate() {
@@ -189,10 +173,6 @@ export class Gameloop {
             return;
         }
 
-        if (!this.canvas || !this.context) {
-            throw new Error("Missing canvas");
-        }
-
         let lerpTime;
 
         if (this.doLerp) {
@@ -202,7 +182,7 @@ export class Gameloop {
             this.doDraw = false; // Don't draw next frame until a new logic frame comes in
         }
 
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.gameRenderer.drawBackgroundColor(0, 0, 0);
 
         this.currentScene.draw(this, lerpTime);
     }

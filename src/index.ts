@@ -1,25 +1,34 @@
+import { Picture, PictureSlice } from "./graphics";
 import { Gameloop } from "./gameloop";
 import { DrawLogic, Scene, TickLogic } from "./scene";
 import { lerp } from "./util";
 
+const TEST_SLICE: PictureSlice = {
+    x: 0,
+    y: 160,
+    w: 32,
+    h: 32
+};
+
 class TestLogic implements TickLogic, DrawLogic {
     private tickCount = 0;
+    private picture;
+
+    constructor () {
+        this.picture = new Picture("res/GameAtlas.png");
+        Picture.waitForLoad();
+    }
 
     tick(_gameloop: Gameloop, _scene: Scene) {
         this.tickCount += 1;
     }
-    draw(gameloop: Gameloop, _scene: Scene, lerpTime: number){
+    draw(gameloop: Gameloop, _scene: Scene, lerpTime: number) {
+        gameloop.renderer().contextRaw().imageSmoothingEnabled = false;
+
         const x = 64 + (this.tickCount % 60) * 4;
         const xPrev = 64 + ((this.tickCount - 1) % 60) * 4;
 
-        const context = gameloop.drawContextRaw();
-
-        if (!context) {
-            return;
-        }
-
-        context.fillStyle = "rgb(128, 128, 128)";
-        context.fillRect(lerp(xPrev, x, lerpTime), 64, 256, 256);
+        gameloop.renderer().drawSprite(this.picture, TEST_SLICE, lerp(xPrev, x, lerpTime), 64);
     }
 }
 
