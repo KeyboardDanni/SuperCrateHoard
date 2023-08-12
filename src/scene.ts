@@ -1,8 +1,8 @@
 import { Gameloop } from "./gameloop";
 
 export class Scene {
-    private tickLogic: Array<TickLogic> = []
-    private drawLogic: Array<DrawLogic> = []
+    private tickLogic: Array<TickLogic> = [];
+    private drawLogic: Array<DrawLogic> = [];
 
     tick(gameloop: Gameloop) {
         for (const logic of this.tickLogic) {
@@ -10,7 +10,7 @@ export class Scene {
         }
     }
 
-    draw (gameloop: Gameloop, lerpTime: number) {
+    draw(gameloop: Gameloop, lerpTime: number) {
         for (const logic of this.drawLogic) {
             logic.draw(gameloop, this, lerpTime);
         }
@@ -26,9 +26,9 @@ export class Scene {
 }
 
 export interface TickLogic {
-    tick: (gameloop: Gameloop, scene: Scene) => void
+    tick: (gameloop: Gameloop, scene: Scene) => void;
 }
 
 export interface DrawLogic {
-    draw: (gameloop: Gameloop, scene: Scene, lerpTime: number) => void
+    draw: (gameloop: Gameloop, scene: Scene, lerpTime: number) => void;
 }

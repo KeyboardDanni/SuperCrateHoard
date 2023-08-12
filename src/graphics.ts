@@ -1,6 +1,6 @@
 export class PictureData {
     private imageElement;
-    
+
     constructor(source: string) {
         this.imageElement = new Image();
         this.imageElement.loading = "eager";
@@ -17,12 +17,12 @@ export class PictureData {
 }
 
 export class Picture {
-    private static dataCache: {[id: string]: PictureData} = {};
-    private pictureData : PictureData;
+    private static dataCache: { [id: string]: PictureData } = {};
+    private pictureData: PictureData;
 
     constructor(source: string) {
         if (!Picture.dataCache[source]) {
-            let newData = new PictureData(source);
+            const newData = new PictureData(source);
 
             Picture.dataCache[source] = newData;
         }
@@ -60,9 +60,7 @@ export class Renderer {
     private drawingContext: CanvasRenderingContext2D;
 
     constructor(canvasId: string) {
-        this.mainCanvas = <HTMLCanvasElement>(
-            document.getElementById(canvasId)
-        );
+        this.mainCanvas = <HTMLCanvasElement>document.getElementById(canvasId);
 
         if (!this.mainCanvas || !this.mainCanvas.getContext) {
             throw new Error("Missing canvas");
@@ -79,7 +77,12 @@ export class Renderer {
 
     drawBackgroundColor(r: number, g: number, b: number, a: number = 1.0) {
         this.drawingContext.fillStyle = `rgb(${r}, ${g}, ${b}, ${a})`;
-        this.drawingContext.fillRect(-1, -1, this.mainCanvas.width + 2, this.mainCanvas.height + 2);
+        this.drawingContext.fillRect(
+            -1,
+            -1,
+            this.mainCanvas.width + 2,
+            this.mainCanvas.height + 2
+        );
     }
 
     drawPicture(picture: Picture, x: number, y: number) {
@@ -87,7 +90,17 @@ export class Renderer {
     }
 
     drawSprite(picture: Picture, slice: PictureSlice, x: number, y: number) {
-        this.drawingContext.drawImage(picture.sharedData().image(), slice.x, slice.y, slice.w, slice.h, x, y, slice.w, slice.h);
+        this.drawingContext.drawImage(
+            picture.sharedData().image(),
+            slice.x,
+            slice.y,
+            slice.w,
+            slice.h,
+            x,
+            y,
+            slice.w,
+            slice.h
+        );
     }
 
     canvas() {

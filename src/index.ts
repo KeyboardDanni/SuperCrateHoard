@@ -7,14 +7,14 @@ const TEST_SLICE: PictureSlice = {
     x: 0,
     y: 160,
     w: 32,
-    h: 32
+    h: 32,
 };
 
 class TestLogic implements TickLogic, DrawLogic {
     private tickCount = 0;
     private picture;
 
-    constructor () {
+    constructor() {
         this.picture = new Picture("res/GameAtlas.png");
         Picture.waitForLoad();
     }
@@ -28,7 +28,9 @@ class TestLogic implements TickLogic, DrawLogic {
         const x = 64 + (this.tickCount % 60) * 4;
         const xPrev = 64 + ((this.tickCount - 1) % 60) * 4;
 
-        gameloop.renderer().drawSprite(this.picture, TEST_SLICE, lerp(xPrev, x, lerpTime), 64);
+        gameloop
+            .renderer()
+            .drawSprite(this.picture, TEST_SLICE, lerp(xPrev, x, lerpTime), 64);
     }
 }
 

@@ -42,8 +42,12 @@ class VsyncMeasurer {
         //  and may wrongly mark the data as good if there is consistent slowdown
         //  throwing off the Vsync timings.
         if (this.timings.length > 0) {
-            if (Math.abs(this.timings[this.timings.length - 1] - timing) > VSYNC_SAMPLE_TOLERANCE ||
-                Math.abs(this.averageRateRaw() - timing) > VSYNC_SAMPLE_TOLERANCE) {
+            if (
+                Math.abs(this.timings[this.timings.length - 1] - timing) >
+                    VSYNC_SAMPLE_TOLERANCE ||
+                Math.abs(this.averageRateRaw() - timing) >
+                    VSYNC_SAMPLE_TOLERANCE
+            ) {
                 this.goodSamples = 0;
             } else {
                 this.goodSamples += 1;
@@ -100,7 +104,7 @@ export class Gameloop {
     private doLerp = false;
     private running = false;
 
-    constructor (canvasId: string) {
+    constructor(canvasId: string) {
         this.gameRenderer = new Renderer(canvasId);
     }
 
