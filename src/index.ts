@@ -23,7 +23,7 @@ class TestLogic implements TickLogic, DrawLogic {
         this.tickCount += 1;
     }
     draw(gameloop: Gameloop, _scene: Scene, lerpTime: number) {
-        gameloop.renderer().contextRaw().imageSmoothingEnabled = false;
+        gameloop.renderer().context().imageSmoothingEnabled = false;
 
         const x = 64 + (this.tickCount % 60) * 4;
         const xPrev = 64 + ((this.tickCount - 1) % 60) * 4;
@@ -33,7 +33,7 @@ class TestLogic implements TickLogic, DrawLogic {
 }
 
 window.onload = function init() {
-    const gameloop = new Gameloop();
+    const gameloop = new Gameloop("game_surface");
 
     gameloop.setScene(() => {
         const scene = new Scene();

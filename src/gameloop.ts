@@ -89,7 +89,7 @@ class VsyncMeasurer {
 }
 
 export class Gameloop {
-    private gameRenderer: Renderer = new Renderer();
+    private gameRenderer: Renderer;
     private currentScene: Scene = new Scene();
     private pendingSceneFunc: (() => Scene) | null = null;
     private vsyncRate = new VsyncMeasurer();
@@ -99,6 +99,10 @@ export class Gameloop {
     private doDraw = false;
     private doLerp = false;
     private running = false;
+
+    constructor (canvasId: string) {
+        this.gameRenderer = new Renderer(canvasId);
+    }
 
     run() {
         if (this.running) {

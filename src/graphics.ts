@@ -56,45 +56,45 @@ export class PictureSlice {
 }
 
 export class Renderer {
-    private canvas: HTMLCanvasElement;
-    private context: CanvasRenderingContext2D;
+    private mainCanvas: HTMLCanvasElement;
+    private drawingContext: CanvasRenderingContext2D;
 
-    constructor() {
-        this.canvas = <HTMLCanvasElement>(
-            document.getElementById("game_surface")
+    constructor(canvasId: string) {
+        this.mainCanvas = <HTMLCanvasElement>(
+            document.getElementById(canvasId)
         );
 
-        if (!this.canvas || !this.canvas.getContext) {
+        if (!this.mainCanvas || !this.mainCanvas.getContext) {
             throw new Error("Missing canvas");
         }
 
-        const context = this.canvas.getContext("2d");
+        const context = this.mainCanvas.getContext("2d");
 
         if (!context) {
             throw new Error("Could not create canvas context");
         }
 
-        this.context = context;
+        this.drawingContext = context;
     }
 
     drawBackgroundColor(r: number, g: number, b: number, a: number = 1.0) {
-        this.context.fillStyle = `rgb(${r}, ${g}, ${b}, ${a})`;
-        this.context.fillRect(-1, -1, this.canvas.width + 2, this.canvas.height + 2);
+        this.drawingContext.fillStyle = `rgb(${r}, ${g}, ${b}, ${a})`;
+        this.drawingContext.fillRect(-1, -1, this.mainCanvas.width + 2, this.mainCanvas.height + 2);
     }
 
     drawPicture(picture: Picture, x: number, y: number) {
-        this.context.drawImage(picture.sharedData().image(), x, y);
+        this.drawingContext.drawImage(picture.sharedData().image(), x, y);
     }
 
     drawSprite(picture: Picture, slice: PictureSlice, x: number, y: number) {
-        this.context.drawImage(picture.sharedData().image(), slice.x, slice.y, slice.w, slice.h, x, y, slice.w, slice.h);
+        this.drawingContext.drawImage(picture.sharedData().image(), slice.x, slice.y, slice.w, slice.h, x, y, slice.w, slice.h);
     }
 
-    canvasRaw() {
-        return this.canvas;
+    canvas() {
+        return this.mainCanvas;
     }
 
-    contextRaw() {
-        return this.context;
+    context() {
+        return this.drawingContext;
     }
 }
