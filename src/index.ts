@@ -1,7 +1,7 @@
-import { Picture, PictureSlice } from "./graphics";
-import { Gameloop } from "./gameloop";
-import { DrawLogic, Scene, TickLogic } from "./scene";
-import { lerp } from "./util";
+import { Picture, PictureSlice } from "./engine/graphics";
+import { Gameloop } from "./engine/gameloop";
+import { DrawLogic, Scene, TickLogic } from "./engine/scene";
+import { lerp } from "./engine/util";
 
 const TEST_SLICE: PictureSlice = {
     x: 0,
