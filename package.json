@@ -4,7 +4,8 @@
   "description": "Sokoban with numerous quality-of-life enhancements",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install"
   },
   "author": "KeyboardDanni",
   "license": "ISC",
@@ -12,6 +13,7 @@
     "@typescript-eslint/eslint-plugin": "^6.3.0",
     "@typescript-eslint/parser": "^6.3.0",
     "eslint": "^8.46.0",
+    "husky": "^8.0.0",
     "prettier": "^3.0.1",
     "ts-loader": "^9.4.4",
     "typescript": "^5.1.6",
