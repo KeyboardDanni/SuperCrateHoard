@@ -1,4 +1,5 @@
 import { Renderer } from "./graphics";
+import { Input } from "./input";
 import { Scene } from "./scene";
 
 const TICKRATE = 1000.0 / 60.0;
@@ -93,6 +94,7 @@ class VsyncMeasurer {
 }
 
 export class Gameloop {
+    private gameInput: Input;
     private gameRenderer: Renderer;
     private currentScene: Scene = new Scene();
     private pendingSceneFunc: (() => Scene) | null = null;
@@ -105,6 +107,7 @@ export class Gameloop {
     private running = false;
 
     constructor(canvasId: string) {
+        this.gameInput = new Input();
         this.gameRenderer = new Renderer(canvasId);
     }
 
@@ -126,6 +129,10 @@ export class Gameloop {
 
     setScene(func: () => Scene) {
         this.pendingSceneFunc = func;
+    }
+
+    input() {
+        return this.gameInput;
     }
 
     renderer() {
@@ -154,6 +161,7 @@ export class Gameloop {
 
         // Perform game logic catchup as necessary
         while (this.tickQueue >= TICKRATE) {
+            this.gameInput.newFrame();
             this.currentScene.tick(this);
 
             this.framesSinceTickLag++;

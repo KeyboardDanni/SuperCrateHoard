@@ -15,19 +15,36 @@ const TEST_SLICE: PictureSlice = {
 
 class TestLogic implements TickLogic, DrawLogic {
     private tickCount = 0;
+    private x = 256;
+    private y = 256;
     private picture;
     private font: BMFont;
     private outlineFont: BMFont;
 
-    constructor() {
+    constructor(gameloop: Gameloop) {
+        const input = gameloop.input();
+
+        input.addAction("left", ["ArrowLeft", "KeyA"]);
+        input.addAction("right", ["ArrowRight", "KeyD"]);
+        input.addAction("up", ["ArrowUp", "KeyW"]);
+        input.addAction("down", ["ArrowDown", "KeyS"]);
+
         this.font = new BMFont(fontDescriptor);
         this.outlineFont = new BMFont(outlineFontDescriptor);
         this.picture = new Picture("res/GameAtlas.png");
         Picture.waitForLoad();
     }
 
-    tick(_gameloop: Gameloop, _scene: Scene) {
+    tick(gameloop: Gameloop, _scene: Scene) {
+        const input = gameloop.input();
         this.tickCount += 1;
+        const [left, right] = [input.held("left"), input.held("right")];
+        const [up, down] = [input.held("up"), input.held("down")];
+
+        if (left && !right) this.x -= 1;
+        if (!left && right) this.x += 1;
+        if (up && !down) this.y -= 1;
+        if (!up && down) this.y += 1;
     }
     draw(gameloop: Gameloop, _scene: Scene, lerpTime: number) {
         const renderer = gameloop.renderer();
@@ -49,8 +66,8 @@ class TestLogic implements TickLogic, DrawLogic {
         font.drawText(
             renderer,
             "Hello, world! This is some wrapped text!\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-            256,
-            256,
+            this.x,
+            this.y,
             512
         );
     }
@@ -61,7 +78,7 @@ window.onload = function init() {
 
     gameloop.setScene(() => {
         const scene = new Scene();
-        const logic = new TestLogic();
+        const logic = new TestLogic(gameloop);
 
         scene.addTickLogic(logic);
         scene.addDrawLogic(logic);
