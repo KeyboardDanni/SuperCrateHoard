@@ -96,8 +96,8 @@ export class Renderer {
             slice.y,
             slice.w,
             slice.h,
-            x,
-            y,
+            Math.round(x),
+            Math.round(y),
             slice.w,
             slice.h
         );
