@@ -16,6 +16,11 @@ export class Scene {
         }
     }
 
+    addLogic(logic: TickLogic & DrawLogic) {
+        this.tickLogic.push(logic);
+        this.drawLogic.push(logic);
+    }
+
     addTickLogic(logic: TickLogic) {
         this.tickLogic.push(logic);
     }

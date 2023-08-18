@@ -1,18 +1,15 @@
-import { Picture, PictureSlice } from "../../engine/graphics";
+import { Picture } from "../../engine/graphics";
 import { Gameloop } from "../../engine/gameloop";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { lerp } from "../../engine/util";
+import * as gameAtlasJson from "../../res/GameAtlas.json";
+
+const slices = gameAtlasJson;
 
 const NUM_CRATE_ROWS = 32;
 const BG_CRATE_DENSITY = 0.3;
-const OFFSET_DARK_SQUARE = 32;
-const OFFSET_CRATE_SQUARE = 64;
-const SLICE_BG: PictureSlice = {
-    x: 0,
-    y: 96,
-    w: 32,
-    h: 32,
-};
+const OFFSET_DARK_SQUARE = 1;
+const OFFSET_CRATE_SQUARE = 2;
 
 export class BgDrawer implements TickLogic, DrawLogic {
     private image;
@@ -31,15 +28,16 @@ export class BgDrawer implements TickLogic, DrawLogic {
         }
 
         const crates: boolean[] = [];
+        const tileWidth = slices.bg[0].w;
+        const tileHeight = slices.bg[0].h;
 
         for (let i = 0; i < NUM_CRATE_ROWS ** 2; ++i) {
             crates.push(Math.random() < BG_CRATE_DENSITY);
         }
 
-        const slice: PictureSlice = { ...SLICE_BG };
         const canvas = new OffscreenCanvas(
-            NUM_CRATE_ROWS * slice.w,
-            NUM_CRATE_ROWS * slice.h
+            NUM_CRATE_ROWS * tileWidth,
+            NUM_CRATE_ROWS * tileHeight
         );
         const context = canvas.getContext("2d");
 
@@ -47,13 +45,13 @@ export class BgDrawer implements TickLogic, DrawLogic {
             throw new Error("Offscreen canvas context failed");
         }
 
-        const gridWidth = Math.ceil(canvas.width / slice.w) + 1;
-        const gridHeight = Math.ceil(canvas.height / slice.h) + 1;
+        const gridWidth = Math.ceil(canvas.width / tileWidth) + 1;
+        const gridHeight = Math.ceil(canvas.height / tileHeight) + 1;
 
         for (let y = 0; y < gridHeight; ++y) {
             for (let x = 0; x < gridWidth; ++x) {
                 // Checker pattern
-                slice.x = (x + y) % 2 ? OFFSET_DARK_SQUARE : 0;
+                let offset = (x + y) % 2 ? OFFSET_DARK_SQUARE : 0;
 
                 // Get whether this background checker square is a crate
                 const [crateX, crateY] = [
@@ -61,8 +59,10 @@ export class BgDrawer implements TickLogic, DrawLogic {
                     y % NUM_CRATE_ROWS,
                 ];
                 if (crates[crateX + crateY * NUM_CRATE_ROWS]) {
-                    slice.x += OFFSET_CRATE_SQUARE;
+                    offset += OFFSET_CRATE_SQUARE;
                 }
+
+                const slice = slices.bg[offset];
 
                 context.drawImage(
                     this.image.sharedData().image(),

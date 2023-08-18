@@ -1,0 +1,11 @@
+{
+    "title": { "x": 1, "y": 1, "w": 644, "h": 156 },
+    "arrowRight": { "x": 1, "y": 161, "w": 12, "h": 22 },
+    "arrowLeft": { "x": 19, "y": 161, "w": 12, "h": 22 },
+    "arrowUp": { "x": 33, "y": 161, "w": 20, "h": 14 },
+    "arrowDown": { "x": 33, "y": 177, "w": 20, "h": 14 },
+    "starWhiteEmpty": { "x": 65, "y": 161, "w": 14, "h": 12 },
+    "starWhiteFilled": { "x": 81, "y": 161, "w": 14, "h": 12 },
+    "starBlackEmpty": { "x": 65, "y": 175, "w": 14, "h": 12 },
+    "starBlackFilled": { "x": 81, "y": 175, "w": 14, "h": 12 }
+}
