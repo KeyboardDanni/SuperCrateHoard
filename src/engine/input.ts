@@ -12,6 +12,10 @@ export class Input {
             this.keyDownHandler(event)
         );
         document.addEventListener("keyup", (event) => this.keyUpHandler(event));
+        document.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
     }
 
     private keyDownHandler(event: KeyboardEvent) {

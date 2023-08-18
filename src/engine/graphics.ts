@@ -73,6 +73,12 @@ export class Renderer {
         }
 
         this.drawingContext = context;
+
+        document.addEventListener("keydown", (event) => {
+            if (event.altKey && event.code == "Enter" && !event.repeat) {
+                this.toggleFullscreen();
+            }
+        });
     }
 
     drawBackgroundColor(r: number, g: number, b: number, a: number = 1.0) {
@@ -101,6 +107,14 @@ export class Renderer {
             slice.w,
             slice.h
         );
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            this.mainCanvas.requestFullscreen({ navigationUI: "hide" });
+        } else {
+            document.exitFullscreen();
+        }
     }
 
     canvas() {
