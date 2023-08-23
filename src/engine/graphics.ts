@@ -1,9 +1,14 @@
 export class PictureData {
+    private static numLoading = 0;
     private imageElement;
 
     constructor(source: string) {
         this.imageElement = new Image();
         this.imageElement.loading = "eager";
+        PictureData.numLoading++;
+        this.imageElement.onload = () => {
+            PictureData.numLoading--;
+        };
         this.imageElement.src = source;
     }
 
@@ -11,8 +16,8 @@ export class PictureData {
         return this.imageElement;
     }
 
-    async waitForLoad() {
-        await this.imageElement.decode();
+    static itemsLoading() {
+        return this.numLoading;
     }
 }
 
@@ -34,10 +39,12 @@ export class Picture {
         return this.pictureData;
     }
 
-    static waitForLoad() {
-        for (const data of Object.values(Picture.dataCache)) {
-            data.waitForLoad();
-        }
+    isLoaded() {
+        return this.pictureData.image().complete;
+    }
+
+    static allLoaded() {
+        return PictureData.itemsLoading() <= 0;
     }
 }
 
@@ -58,6 +65,7 @@ export class PictureSlice {
 export class Renderer {
     private mainCanvas: HTMLCanvasElement;
     private drawingContext: CanvasRenderingContext2D;
+    private alreadyWarned: { [id: string]: boolean } = {};
 
     constructor(canvasId: string) {
         this.mainCanvas = <HTMLCanvasElement>document.getElementById(canvasId);
@@ -81,6 +89,21 @@ export class Renderer {
         });
     }
 
+    private checkPictureLoaded(picture: Picture) {
+        const src = picture.sharedData().image().src;
+
+        if (!picture.isLoaded()) {
+            if (!this.alreadyWarned[src]) {
+                this.alreadyWarned[src] = true;
+                console.warn(`Drawing unloaded picture: "${src}"`);
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
     drawBackgroundColor(r: number, g: number, b: number, a: number = 1.0) {
         this.drawingContext.fillStyle = `rgb(${r}, ${g}, ${b}, ${a})`;
         this.drawingContext.fillRect(
@@ -92,21 +115,25 @@ export class Renderer {
     }
 
     drawPicture(picture: Picture, x: number, y: number) {
-        this.drawingContext.drawImage(picture.sharedData().image(), x, y);
+        if (this.checkPictureLoaded(picture)) {
+            this.drawingContext.drawImage(picture.sharedData().image(), x, y);
+        }
     }
 
     drawSprite(picture: Picture, slice: PictureSlice, x: number, y: number) {
-        this.drawingContext.drawImage(
-            picture.sharedData().image(),
-            slice.x,
-            slice.y,
-            slice.w,
-            slice.h,
-            Math.round(x),
-            Math.round(y),
-            slice.w,
-            slice.h
-        );
+        if (this.checkPictureLoaded(picture)) {
+            this.drawingContext.drawImage(
+                picture.sharedData().image(),
+                slice.x,
+                slice.y,
+                slice.w,
+                slice.h,
+                Math.round(x),
+                Math.round(y),
+                slice.w,
+                slice.h
+            );
+        }
     }
 
     toggleFullscreen() {

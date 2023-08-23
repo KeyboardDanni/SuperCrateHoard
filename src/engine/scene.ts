@@ -1,17 +1,31 @@
 import { Gameloop } from "./gameloop";
+import { Picture } from "./graphics";
 
 export class Scene {
     private tickLogic: Array<TickLogic> = [];
     private drawLogic: Array<DrawLogic> = [];
+    private tickLoaderLogic: Array<TickLogic> = [];
+    private drawLoaderLogic: Array<DrawLogic> = [];
+    waitForLoad = true;
 
     tick(gameloop: Gameloop) {
-        for (const logic of this.tickLogic) {
+        const logicList =
+            this.waitForLoad && !Picture.allLoaded()
+                ? this.tickLoaderLogic
+                : this.tickLogic;
+
+        for (const logic of logicList) {
             logic.tick(gameloop, this);
         }
     }
 
     draw(gameloop: Gameloop, lerpTime: number) {
-        for (const logic of this.drawLogic) {
+        const logicList =
+            this.waitForLoad && !Picture.allLoaded()
+                ? this.drawLoaderLogic
+                : this.drawLogic;
+
+        for (const logic of logicList) {
             logic.draw(gameloop, this, lerpTime);
         }
     }
@@ -27,6 +41,14 @@ export class Scene {
 
     addDrawLogic(logic: DrawLogic) {
         this.drawLogic.push(logic);
+    }
+
+    addTickLoaderLogic(logic: TickLogic) {
+        this.tickLoaderLogic.push(logic);
+    }
+
+    addDrawLoaderLogic(logic: DrawLogic) {
+        this.drawLoaderLogic.push(logic);
     }
 }
 

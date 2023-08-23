@@ -23,7 +23,7 @@ export class BgDrawer implements TickLogic, DrawLogic {
     }
 
     createCanvas() {
-        if (this.canvas) {
+        if (this.canvas || !Picture.allLoaded()) {
             return;
         }
 
