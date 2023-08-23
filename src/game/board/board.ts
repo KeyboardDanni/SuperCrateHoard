@@ -1,6 +1,19 @@
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 
-export enum BoardTile {
+export class BoardToken {
+    x: number = 0;
+    y: number = 0;
+    picture: Picture | null = null;
+    slice: PictureSlice = new PictureSlice(0, 0, 0, 0);
+
+    draw(renderer: Renderer, targetX: number, targetY: number) {
+        if (this.picture) {
+            renderer.drawSprite(this.picture, this.slice, targetX, targetY);
+        }
+    }
+}
+
+export enum BoardTileType {
     None,
     Floor,
     Wall,
@@ -20,11 +33,12 @@ export class Board {
     readonly height: number;
     readonly tileWidth: number;
     readonly tileHeight: number;
-    private tiles: BoardTile[];
+    private tiles: BoardTileType[];
     private displayTiles: (PictureSlice | null)[];
     private picture: Picture;
     private slices: TileSlices;
-    dirty = true;
+    private dirty = true;
+    tokens: BoardToken[] = [];
 
     constructor(
         width: number,
@@ -35,7 +49,7 @@ export class Board {
         this.width = width;
         this.height = height;
         this.tiles = new Array(width * height);
-        this.tiles.fill(BoardTile.None);
+        this.tiles.fill(BoardTileType.None);
         this.displayTiles = new Array(width * height);
         this.displayTiles.fill(null);
         this.picture = picture;
@@ -47,10 +61,10 @@ export class Board {
     private neighborBits(x: number, y: number) {
         let bits = 0;
 
-        if (this.tile(x, y - 1) === BoardTile.Wall) bits += 1;
-        if (this.tile(x + 1, y) === BoardTile.Wall) bits += 2;
-        if (this.tile(x, y + 1) === BoardTile.Wall) bits += 4;
-        if (this.tile(x - 1, y) === BoardTile.Wall) bits += 8;
+        if (this.tile(x, y - 1) === BoardTileType.Wall) bits += 1;
+        if (this.tile(x + 1, y) === BoardTileType.Wall) bits += 2;
+        if (this.tile(x, y + 1) === BoardTileType.Wall) bits += 4;
+        if (this.tile(x - 1, y) === BoardTileType.Wall) bits += 8;
 
         return bits;
     }
@@ -64,16 +78,16 @@ export class Board {
                 const tile = this.tile(x, y);
 
                 switch (tile) {
-                    case BoardTile.None:
+                    case BoardTileType.None:
                         this.displayTiles[i] = null;
                         break;
-                    case BoardTile.Floor:
+                    case BoardTileType.Floor:
                         this.displayTiles[i] = this.slices.floor[0];
                         break;
-                    case BoardTile.Dropzone:
+                    case BoardTileType.Dropzone:
                         this.displayTiles[i] = this.slices.dropzone[0];
                         break;
-                    case BoardTile.Wall: {
+                    case BoardTileType.Wall: {
                         const index = this.neighborBits(x, y);
                         this.displayTiles[i] = this.slices.wall[index];
                         break;
@@ -91,13 +105,13 @@ export class Board {
 
     tile(x: number, y: number) {
         if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
-            return BoardTile.None;
+            return BoardTileType.None;
         }
 
         return this.tiles[this.posToIndex(x, y)];
     }
 
-    setTile(x: number, y: number, tile: BoardTile) {
+    setTile(x: number, y: number, tile: BoardTileType) {
         if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
             throw new Error("Tile coordinates out of range");
         }
@@ -128,6 +142,13 @@ export class Board {
 
                 ++i;
             }
+        }
+
+        for (const token of this.tokens) {
+            const x = token.x * this.tileWidth + this.x;
+            const y = token.y * this.tileHeight + this.y;
+
+            token.draw(renderer, x, y);
         }
     }
 }

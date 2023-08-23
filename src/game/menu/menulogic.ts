@@ -4,7 +4,7 @@ import { centered } from "../../engine/util";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import * as titleAtlasJson from "../../res/TitleAtlas.json";
 import * as previewAtlasJson from "../../res/PreviewAtlas.json";
-import { Board, BoardTile } from "../board/board";
+import { Board, BoardTileType, BoardToken } from "../board/board";
 
 const titleSlices = titleAtlasJson;
 const previewSlices = previewAtlasJson;
@@ -33,9 +33,19 @@ export class MenuLogic implements TickLogic, DrawLogic {
         for (let y = 0; y < 16; ++y) {
             for (let x = 0; x < 16; ++x) {
                 if (Math.random() < 0.4) {
-                    this.previewBoard.setTile(x, y, BoardTile.Wall);
+                    this.previewBoard.setTile(x, y, BoardTileType.Wall);
                 } else {
-                    this.previewBoard.setTile(x, y, BoardTile.Floor);
+                    this.previewBoard.setTile(x, y, BoardTileType.Floor);
+
+                    if (Math.random() < 0.1) {
+                        const token = new BoardToken();
+                        token.x = x;
+                        token.y = y;
+                        token.picture = this.previewPicture;
+                        token.slice = previewSlices.crate[0];
+
+                        this.previewBoard.tokens.push(token);
+                    }
                 }
             }
         }
