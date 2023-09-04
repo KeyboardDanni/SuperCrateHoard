@@ -1,5 +1,6 @@
 import { Gameloop } from "./gameloop";
-import { Picture } from "./graphics";
+import { Picture, PictureData } from "./graphics";
+import { stringListToString } from "./util";
 
 export class Scene {
     private tickLogic: Array<TickLogic> = [];
@@ -11,6 +12,13 @@ export class Scene {
     /// Override to provide custom logic to check if all resources are loaded.
     isLoaded() {
         if (this.waitForResources) {
+            if (
+                PictureData.itemsLoading() <= 0 &&
+                PictureData.itemErrors().length > 0
+            ) {
+                throw new Error(stringListToString(PictureData.itemErrors()));
+            }
+
             return Picture.allLoaded();
         }
         return true;

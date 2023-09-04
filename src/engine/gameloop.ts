@@ -140,17 +140,57 @@ export class Gameloop {
     }
 
     private timerUpdate() {
-        this.vsyncRate.updateTimings();
+        try {
+            this.vsyncRate.updateTimings();
 
-        if (this.pendingSceneFunc !== null) {
-            this.currentScene = this.pendingSceneFunc();
-            this.pendingSceneFunc = null;
+            if (this.pendingSceneFunc !== null) {
+                this.currentScene = this.pendingSceneFunc();
+                this.pendingSceneFunc = null;
+            }
+
+            this.updateTicks();
+            this.updateDraw();
+
+            requestAnimationFrame(this.timerUpdate.bind(this));
+        } catch (exception) {
+            const canvas = this.gameRenderer.canvas();
+            let text = "";
+
+            if (exception instanceof Error) {
+                text = `${exception.name}\n${exception.message}`;
+            } else {
+                text = "Unknown error occurred.";
+            }
+
+            const [x, y] = [32, 32];
+
+            for (const offset of [
+                [1, 0],
+                [-1, 0],
+                [0, -1],
+                [0, 1],
+            ]) {
+                this.gameRenderer.drawText(
+                    text,
+                    x + offset[0],
+                    y + offset[1],
+                    "14px Consolas",
+                    "rgb(0, 0, 0, 1.0)",
+                    canvas.width - 64
+                );
+            }
+
+            this.gameRenderer.drawText(
+                text,
+                x,
+                y,
+                "14px Consolas",
+                "rgb(255, 255, 255, 1.0)",
+                canvas.width - 64
+            );
+
+            throw exception;
         }
-
-        this.updateTicks();
-        this.updateDraw();
-
-        requestAnimationFrame(this.timerUpdate.bind(this));
     }
 
     private updateTicks() {

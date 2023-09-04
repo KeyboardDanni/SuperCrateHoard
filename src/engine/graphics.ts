@@ -1,5 +1,6 @@
 export class PictureData {
     private static numLoading = 0;
+    private static errors: string[] = [];
     private imageElement;
 
     constructor(source: string) {
@@ -7,6 +8,10 @@ export class PictureData {
         this.imageElement.loading = "eager";
         PictureData.numLoading++;
         this.imageElement.onload = () => {
+            PictureData.numLoading--;
+        };
+        this.imageElement.onerror = () => {
+            PictureData.errors.push(`Image failed to load: "${source}"`);
             PictureData.numLoading--;
         };
         this.imageElement.src = source;
@@ -18,6 +23,10 @@ export class PictureData {
 
     static itemsLoading() {
         return this.numLoading;
+    }
+
+    static itemErrors() {
+        return this.errors;
     }
 }
 
@@ -44,7 +53,10 @@ export class Picture {
     }
 
     static allLoaded() {
-        return PictureData.itemsLoading() <= 0;
+        return (
+            PictureData.itemsLoading() <= 0 &&
+            PictureData.itemErrors().length <= 0
+        );
     }
 }
 
