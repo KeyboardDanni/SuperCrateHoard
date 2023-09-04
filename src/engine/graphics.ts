@@ -136,6 +136,58 @@ export class Renderer {
         }
     }
 
+    drawText(
+        text: string,
+        x: number,
+        y: number,
+        font: string,
+        style: string,
+        maxWidth = -1
+    ) {
+        this.drawingContext.font = font;
+        this.drawingContext.fillStyle = style;
+
+        const metrics = this.drawingContext.measureText(" ");
+        const lineHeight = Math.ceil(
+            (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent) *
+                1.1
+        );
+
+        if (maxWidth > 0) {
+            text = this.computeWordWrap(text, maxWidth);
+        }
+
+        const lines = text.split("\n");
+
+        for (const line of lines) {
+            this.drawingContext.fillText(line, x, y);
+            y += lineHeight;
+        }
+    }
+
+    computeWordWrap(text: string, maxWidth: number) {
+        let wrapped = "";
+        const words = text.split(" ");
+        let currentLine = words[0] ?? "";
+
+        for (let i = 1; i < words.length; ++i) {
+            const word = words[i];
+            const metrics = this.drawingContext.measureText(
+                currentLine + " " + word
+            );
+
+            if (metrics.width > maxWidth) {
+                wrapped += currentLine + "\n";
+                currentLine = word;
+            } else {
+                currentLine += " " + word;
+            }
+        }
+        wrapped += currentLine;
+
+        return wrapped;
+    }
+
     toggleFullscreen() {
         if (!document.fullscreenElement) {
             this.mainCanvas.requestFullscreen({ navigationUI: "hide" });
