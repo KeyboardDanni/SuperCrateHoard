@@ -6,13 +6,20 @@ export class Scene {
     private drawLogic: Array<DrawLogic> = [];
     private tickLoaderLogic: Array<TickLogic> = [];
     private drawLoaderLogic: Array<DrawLogic> = [];
-    waitForLoad = true;
+    waitForResources = true;
+
+    /// Override to provide custom logic to check if all resources are loaded.
+    isLoaded() {
+        if (this.waitForResources) {
+            return Picture.allLoaded();
+        }
+        return true;
+    }
 
     tick(gameloop: Gameloop) {
-        const logicList =
-            this.waitForLoad && !Picture.allLoaded()
-                ? this.tickLoaderLogic
-                : this.tickLogic;
+        const logicList = this.isLoaded()
+            ? this.tickLogic
+            : this.tickLoaderLogic;
 
         for (const logic of logicList) {
             logic.tick(gameloop, this);
@@ -20,10 +27,9 @@ export class Scene {
     }
 
     draw(gameloop: Gameloop, lerpTime: number) {
-        const logicList =
-            this.waitForLoad && !Picture.allLoaded()
-                ? this.drawLoaderLogic
-                : this.drawLogic;
+        const logicList = this.isLoaded()
+            ? this.drawLogic
+            : this.drawLoaderLogic;
 
         for (const logic of logicList) {
             logic.draw(gameloop, this, lerpTime);
@@ -53,9 +59,9 @@ export class Scene {
 }
 
 export interface TickLogic {
-    tick: (gameloop: Gameloop, scene: Scene) => void;
+    tick(gameloop: Gameloop, scene: Scene): void;
 }
 
 export interface DrawLogic {
-    draw: (gameloop: Gameloop, scene: Scene, lerpTime: number) => void;
+    draw(gameloop: Gameloop, scene: Scene, lerpTime: number): void;
 }
