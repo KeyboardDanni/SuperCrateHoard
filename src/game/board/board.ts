@@ -1,6 +1,11 @@
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 import { Level } from "../global/level";
 
+class FloodFillWalker {
+    x = 0;
+    y = 0;
+}
+
 export class BoardToken {
     x: number = 0;
     y: number = 0;
@@ -59,6 +64,48 @@ export class Board {
         this.tileHeight = slices.wall[0].h;
     }
 
+    private floodFillFloor(initialWalkers: FloodFillWalker[]) {
+        let walkers = initialWalkers;
+        const covered = Array<boolean>(this.width * this.height).fill(false);
+
+        while (walkers.length > 0) {
+            const nextWalkers = [];
+
+            // Do a horizontal sweep with each walker
+            for (const walker of walkers) {
+                const y = walker.y;
+                let x = walker.x;
+
+                if (!this.posInRange(x, y)) continue;
+                if (this.tile(x, y) === BoardTileType.Wall) continue;
+                if (covered[x + y * this.width] === true) continue;
+
+                while (x > 0 && this.tile(x - 1, y) !== BoardTileType.Wall) {
+                    x--;
+                }
+                while (x < this.width && this.tile(x, y) !== BoardTileType.Wall) {
+                    if (this.tile(x, y) === BoardTileType.None) {
+                        this.setTile(x, y, BoardTileType.Floor);
+                    }
+
+                    covered[x + y * this.width] = true;
+
+                    // Next walkers extend above/below
+                    if (y > 0) {
+                        nextWalkers.push({ x: x, y: y - 1 });
+                    }
+                    if (y < this.height - 1) {
+                        nextWalkers.push({ x: x, y: y + 1 });
+                    }
+
+                    x++;
+                }
+            }
+
+            walkers = nextWalkers;
+        }
+    }
+
     static fromLevel(
         level: Level,
         picture: Picture,
@@ -74,6 +121,7 @@ export class Board {
         }
 
         const board = new Board(width, height, picture, slices);
+        const players = [];
 
         for (let y = 0; y < height; ++y) {
             const row = tiles[y];
@@ -88,7 +136,7 @@ export class Board {
                     case " ":
                     case "@":
                     case "$":
-                        tile = BoardTileType.Floor;
+                        tile = BoardTileType.None;
                         break;
                     case "#":
                         tile = BoardTileType.Wall;
@@ -98,6 +146,8 @@ export class Board {
                     case "*":
                         tile = BoardTileType.Dropzone;
                         break;
+                    default:
+                        throw new Error(`Unrecognized tile character: ${letter}`);
                 }
 
                 board.setTile(x, y, tile);
@@ -109,6 +159,7 @@ export class Board {
                     case "@":
                     case "+":
                         token = tokenCallback(BoardTokenType.Player, tile);
+                        players.push({ x: x, y: y });
                         break;
                     case "$":
                     case "*":
@@ -123,6 +174,8 @@ export class Board {
                 }
             }
         }
+
+        board.floodFillFloor(players);
 
         return board;
     }
@@ -172,8 +225,16 @@ export class Board {
         return x + y * this.width;
     }
 
-    tile(x: number, y: number) {
+    posInRange(x: number, y: number) {
         if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+            return false;
+        }
+
+        return true;
+    }
+
+    tile(x: number, y: number) {
+        if (!this.posInRange(x, y)) {
             return BoardTileType.None;
         }
 
@@ -181,7 +242,7 @@ export class Board {
     }
 
     setTile(x: number, y: number, tile: BoardTileType) {
-        if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+        if (!this.posInRange(x, y)) {
             throw new Error("Tile coordinates out of range");
         }
 
