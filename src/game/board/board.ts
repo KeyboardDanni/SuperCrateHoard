@@ -46,12 +46,7 @@ export class Board {
     private dirty = true;
     tokens: BoardToken[] = [];
 
-    constructor(
-        width: number,
-        height: number,
-        picture: Picture,
-        slices: TileSlices
-    ) {
+    constructor(width: number, height: number, picture: Picture, slices: TileSlices) {
         this.width = width;
         this.height = height;
         this.tiles = new Array(width * height);
@@ -68,10 +63,7 @@ export class Board {
         level: Level,
         picture: Picture,
         slices: TileSlices,
-        tokenCallback: (
-            tokenType: BoardTokenType,
-            tileType: BoardTileType
-        ) => BoardToken
+        tokenCallback: (tokenType: BoardTokenType, tileType: BoardTileType) => BoardToken
     ) {
         const tiles = level.tiles;
         let width = 0;

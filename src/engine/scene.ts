@@ -12,10 +12,7 @@ export class Scene {
     /// Override to provide custom logic to check if all resources are loaded.
     isLoaded() {
         if (this.waitForResources) {
-            if (
-                PictureData.itemsLoading() <= 0 &&
-                PictureData.itemErrors().length > 0
-            ) {
+            if (PictureData.itemsLoading() <= 0 && PictureData.itemErrors().length > 0) {
                 throw new Error(stringListToString(PictureData.itemErrors()));
             }
 
@@ -25,9 +22,7 @@ export class Scene {
     }
 
     tick(gameloop: Gameloop) {
-        const logicList = this.isLoaded()
-            ? this.tickLogic
-            : this.tickLoaderLogic;
+        const logicList = this.isLoaded() ? this.tickLogic : this.tickLoaderLogic;
 
         for (const logic of logicList) {
             logic.tick(gameloop, this);
@@ -35,9 +30,7 @@ export class Scene {
     }
 
     draw(gameloop: Gameloop, lerpTime: number) {
-        const logicList = this.isLoaded()
-            ? this.drawLogic
-            : this.drawLoaderLogic;
+        const logicList = this.isLoaded() ? this.drawLogic : this.drawLoaderLogic;
 
         for (const logic of logicList) {
             logic.draw(gameloop, this, lerpTime);

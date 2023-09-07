@@ -53,10 +53,7 @@ export class Picture {
     }
 
     static allLoaded() {
-        return (
-            PictureData.itemsLoading() <= 0 &&
-            PictureData.itemErrors().length <= 0
-        );
+        return PictureData.itemsLoading() <= 0 && PictureData.itemErrors().length <= 0;
     }
 }
 
@@ -129,12 +126,7 @@ export class Renderer {
 
     drawBackgroundColor(r: number, g: number, b: number, a: number = 1.0) {
         this.drawingContext.fillStyle = `rgb(${r}, ${g}, ${b}, ${a})`;
-        this.drawingContext.fillRect(
-            -1,
-            -1,
-            this.mainCanvas.width + 2,
-            this.mainCanvas.height + 2
-        );
+        this.drawingContext.fillRect(-1, -1, this.mainCanvas.width + 2, this.mainCanvas.height + 2);
     }
 
     drawPicture(picture: Picture, x: number, y: number) {
@@ -169,21 +161,13 @@ export class Renderer {
         this.drawingContext.strokeRect(x, y, w, h);
     }
 
-    drawText(
-        text: string,
-        x: number,
-        y: number,
-        font: string,
-        style: string,
-        maxWidth = -1
-    ) {
+    drawText(text: string, x: number, y: number, font: string, style: string, maxWidth = -1) {
         this.drawingContext.font = font;
         this.drawingContext.fillStyle = style;
 
         const metrics = this.drawingContext.measureText(" ");
         const lineHeight = Math.ceil(
-            (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent) *
-                1.1
+            (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent) * 1.1
         );
 
         if (maxWidth > 0) {
@@ -205,9 +189,7 @@ export class Renderer {
 
         for (let i = 1; i < words.length; ++i) {
             const word = words[i];
-            const metrics = this.drawingContext.measureText(
-                currentLine + " " + word
-            );
+            const metrics = this.drawingContext.measureText(currentLine + " " + word);
 
             if (metrics.width > maxWidth) {
                 wrapped += currentLine + "\n";

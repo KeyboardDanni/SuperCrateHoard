@@ -28,9 +28,7 @@ export class LevelFetchLogic implements TickLogic, DrawLogic {
     }
 
     private async fetchLevels(gameloop: Gameloop<GameSingleton>) {
-        const levels = (await fetchAndReadJson(
-            "./res/levels.json"
-        )) as LevelsList;
+        const levels = (await fetchAndReadJson("./res/levels.json")) as LevelsList;
 
         const promises: Promise<LevelCollection>[] = [];
 
@@ -67,8 +65,7 @@ export class LevelFetchLogic implements TickLogic, DrawLogic {
                 this.loadState = LoadState.Loading;
                 this.fetchLevels(gameloop).catch((error) => {
                     this.error = new Error(
-                        "Failed to read level list: " + error.message ??
-                            String(error)
+                        "Failed to read level list: " + error.message ?? String(error)
                     );
                 });
             }

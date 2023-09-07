@@ -35,10 +35,7 @@ export class BgDrawer implements TickLogic, DrawLogic {
             crates.push(Math.random() < BG_CRATE_DENSITY);
         }
 
-        const canvas = new OffscreenCanvas(
-            NUM_CRATE_ROWS * tileWidth,
-            NUM_CRATE_ROWS * tileHeight
-        );
+        const canvas = new OffscreenCanvas(NUM_CRATE_ROWS * tileWidth, NUM_CRATE_ROWS * tileHeight);
         const context = canvas.getContext("2d");
 
         if (!context) {
@@ -54,10 +51,7 @@ export class BgDrawer implements TickLogic, DrawLogic {
                 let offset = (x + y) % 2 ? OFFSET_DARK_SQUARE : 0;
 
                 // Get whether this background checker square is a crate
-                const [crateX, crateY] = [
-                    x % NUM_CRATE_ROWS,
-                    y % NUM_CRATE_ROWS,
-                ];
+                const [crateX, crateY] = [x % NUM_CRATE_ROWS, y % NUM_CRATE_ROWS];
                 if (crates[crateX + crateY * NUM_CRATE_ROWS]) {
                     offset += OFFSET_CRATE_SQUARE;
                 }
@@ -91,18 +85,11 @@ export class BgDrawer implements TickLogic, DrawLogic {
         if (!this.canvas) return;
 
         const renderer = gameloop.renderer();
-        const [width, height] = [
-            renderer.canvas().width,
-            renderer.canvas().height,
-        ];
+        const [width, height] = [renderer.canvas().width, renderer.canvas().height];
         const gridWidth = Math.ceil(width / this.canvas.width) + 1;
         const gridHeight = Math.ceil(height / this.canvas.height) + 1;
         const context = renderer.context();
-        const scroll = lerp(
-            this.scroll - this.scrollSpeed,
-            this.scroll,
-            lerpTime
-        );
+        const scroll = lerp(this.scroll - this.scrollSpeed, this.scroll, lerpTime);
         const scrollWrapped = scroll % this.canvas.height;
 
         for (let y = 0; y < gridHeight; ++y) {

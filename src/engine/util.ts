@@ -33,9 +33,7 @@ export function stringListToString(lines: string[]) {
 export function fetchAndReadJson(path: string) {
     const promise = fetch(path).then((response) => {
         if (!response.ok) {
-            throw Error(
-                `HTTP response ${response.status}: ${response.statusText}`
-            );
+            throw Error(`HTTP response ${response.status}: ${response.statusText}`);
         }
 
         return response.json();

@@ -8,9 +8,7 @@ export class Input {
     private actions: { [id: string]: Action } = {};
 
     constructor() {
-        document.addEventListener("keydown", (event) =>
-            this.keyDownHandler(event)
-        );
+        document.addEventListener("keydown", (event) => this.keyDownHandler(event));
         document.addEventListener("keyup", (event) => this.keyUpHandler(event));
         document.addEventListener("contextmenu", (event) => {
             event.preventDefault();
@@ -91,9 +89,6 @@ export class Input {
     autoRepeat(name: string, startDelay: number = 15, repeatDelay: number = 3) {
         const time = this.timeHeld(name);
 
-        return (
-            time === 1 ||
-            (time >= startDelay && (time - startDelay) % repeatDelay === 0)
-        );
+        return time === 1 || (time >= startDelay && (time - startDelay) % repeatDelay === 0);
     }
 }

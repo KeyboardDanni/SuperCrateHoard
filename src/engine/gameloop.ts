@@ -44,10 +44,8 @@ class VsyncMeasurer {
         //  throwing off the Vsync timings.
         if (this.timings.length > 0) {
             if (
-                Math.abs(this.timings[this.timings.length - 1] - timing) >
-                    VSYNC_SAMPLE_TOLERANCE ||
-                Math.abs(this.averageRateRaw() - timing) >
-                    VSYNC_SAMPLE_TOLERANCE
+                Math.abs(this.timings[this.timings.length - 1] - timing) > VSYNC_SAMPLE_TOLERANCE ||
+                Math.abs(this.averageRateRaw() - timing) > VSYNC_SAMPLE_TOLERANCE
             ) {
                 this.goodSamples = 0;
             } else {
@@ -199,8 +197,7 @@ export class Gameloop<SingletonType = unknown> {
         }
 
         this.doLerp =
-            this.vsyncRate.shouldLerp() &&
-            this.framesSinceTickLag >= MIN_LAGLESS_FRAMES_FOR_LERP;
+            this.vsyncRate.shouldLerp() && this.framesSinceTickLag >= MIN_LAGLESS_FRAMES_FOR_LERP;
     }
 
     private updateDraw() {
@@ -232,8 +229,7 @@ export class Gameloop<SingletonType = unknown> {
 
         if (error instanceof Error) {
             canvasError = `${error.name}\n${error.message}`;
-            consoleError +=
-                "\n" + error.stack ?? `${error.name}: ${error.message}`;
+            consoleError += "\n" + error.stack ?? `${error.name}: ${error.message}`;
         } else {
             canvasError = "Unknown error occurred.";
             consoleError += "\n" + String(error);

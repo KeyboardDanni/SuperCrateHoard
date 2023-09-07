@@ -4,12 +4,7 @@ import { BMFont } from "../../engine/text";
 import { centered, clamp } from "../../engine/util";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { GameSingleton } from "../singleton";
-import {
-    Board,
-    BoardTileType,
-    BoardToken,
-    BoardTokenType,
-} from "../board/board";
+import { Board, BoardTileType, BoardToken, BoardTokenType } from "../board/board";
 import { Level } from "../global/level";
 
 import * as titleAtlasJson from "../../res/TitleAtlas.json";
@@ -48,10 +43,7 @@ export class MenuLogic implements TickLogic, DrawLogic {
         this.outlineFont = new BMFont(outlineFontDescriptor);
     }
 
-    private makePreviewToken(
-        tokenType: BoardTokenType,
-        tileType: BoardTileType
-    ) {
+    private makePreviewToken(tokenType: BoardTokenType, tileType: BoardTileType) {
         const token = new BoardToken();
 
         switch (tokenType) {
@@ -61,10 +53,7 @@ export class MenuLogic implements TickLogic, DrawLogic {
                 break;
             case BoardTokenType.Crate:
                 token.picture = this.previewPicture;
-                token.slice =
-                    previewSlices.crate[
-                        tileType === BoardTileType.Dropzone ? 1 : 0
-                    ];
+                token.slice = previewSlices.crate[tileType === BoardTileType.Dropzone ? 1 : 0];
                 break;
         }
 
@@ -115,15 +104,13 @@ export class MenuLogic implements TickLogic, DrawLogic {
         }
 
         singleton.currentCollection =
-            (singleton.currentCollection + singleton.levels.length) %
-            singleton.levels.length;
+            (singleton.currentCollection + singleton.levels.length) % singleton.levels.length;
 
         const collection = singleton.levels[singleton.currentCollection];
 
         if (collection) {
             singleton.currentLevel =
-                (singleton.currentLevel + collection.levels.length) %
-                collection.levels.length;
+                (singleton.currentLevel + collection.levels.length) % collection.levels.length;
         } else {
             singleton.currentLevel = 0;
         }
@@ -133,10 +120,7 @@ export class MenuLogic implements TickLogic, DrawLogic {
         this.ticks++;
     }
 
-    private drawCollectionSelector(
-        renderer: Renderer,
-        singleton: GameSingleton
-    ) {
+    private drawCollectionSelector(renderer: Renderer, singleton: GameSingleton) {
         const width = renderer.canvas().width;
         const context = renderer.context();
         const collection = singleton.levels[singleton.currentCollection];
@@ -160,28 +144,12 @@ export class MenuLogic implements TickLogic, DrawLogic {
 
         const bob = Math.sin(this.ticks * 0.1) * 3;
 
-        renderer.drawSprite(
-            this.picture,
-            titleSlices.arrowLeft,
-            310 - bob,
-            202
-        );
-        renderer.drawSprite(
-            this.picture,
-            titleSlices.arrowRight,
-            334 + bob,
-            202
-        );
+        renderer.drawSprite(this.picture, titleSlices.arrowLeft, 310 - bob, 202);
+        renderer.drawSprite(this.picture, titleSlices.arrowRight, 334 + bob, 202);
 
         if (collection) {
             this.font.drawText(renderer, `by ${author}`, 80, 238, width - 140);
-            this.font.drawText(
-                renderer,
-                collection.description,
-                80,
-                266,
-                width - 140
-            );
+            this.font.drawText(renderer, collection.description, 80, 266, width - 140);
         }
     }
 
@@ -194,12 +162,7 @@ export class MenuLogic implements TickLogic, DrawLogic {
 
         const bob = Math.sin(this.ticks * 0.1) * 3;
 
-        renderer.drawSprite(
-            this.picture,
-            titleSlices.arrowUp,
-            132,
-            LEVEL_LIST_Y - bob - 2
-        );
+        renderer.drawSprite(this.picture, titleSlices.arrowUp, 132, LEVEL_LIST_Y - bob - 2);
         renderer.drawSprite(
             this.picture,
             titleSlices.arrowDown,
@@ -279,11 +242,9 @@ export class MenuLogic implements TickLogic, DrawLogic {
         );
 
         this.previewBoard.x =
-            PREVIEW_CENTER_X -
-            (this.previewBoard.width * this.previewBoard.tileWidth) / 2;
+            PREVIEW_CENTER_X - (this.previewBoard.width * this.previewBoard.tileWidth) / 2;
         this.previewBoard.y =
-            PREVIEW_CENTER_Y -
-            (this.previewBoard.height * this.previewBoard.tileHeight) / 2;
+            PREVIEW_CENTER_Y - (this.previewBoard.height * this.previewBoard.tileHeight) / 2;
 
         this.previewBoard.draw(renderer);
     }
@@ -299,12 +260,7 @@ export class MenuLogic implements TickLogic, DrawLogic {
             offset = 80;
         }
 
-        this.font.drawText(
-            renderer,
-            ticker,
-            offset,
-            renderer.canvas().height - 24
-        );
+        this.font.drawText(renderer, ticker, offset, renderer.canvas().height - 24);
     }
 
     draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, _lerpTime: number) {

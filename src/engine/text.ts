@@ -75,11 +75,7 @@ export class BMFont {
     }
 
     private getChar(id: number) {
-        return (
-            this.chars[id] ??
-            this.chars[CODEPOINT_QUESTION_MARK] ??
-            new BMFontChar()
-        );
+        return this.chars[id] ?? this.chars[CODEPOINT_QUESTION_MARK] ?? new BMFontChar();
     }
 
     private readChar(id: number, cursor: CursorState) {
@@ -93,21 +89,14 @@ export class BMFont {
 
         const char = this.getChar(id);
 
-        if (
-            cursor.x + char.xOffset + char.w >
-            cursor.originalX + cursor.wrapWidth
-        ) {
+        if (cursor.x + char.xOffset + char.w > cursor.originalX + cursor.wrapWidth) {
             cursor.newLine();
         }
 
         return char;
     }
 
-    private printChar(
-        char: BMFontChar,
-        cursor: CursorState,
-        renderer: Renderer
-    ) {
+    private printChar(char: BMFontChar, cursor: CursorState, renderer: Renderer) {
         const picture = this.pages[char.page];
 
         renderer.drawSprite(
@@ -123,13 +112,7 @@ export class BMFont {
         );
     }
 
-    drawText(
-        renderer: Renderer,
-        text: string,
-        x: number,
-        y: number,
-        wrapWidth: number = Infinity
-    ) {
+    drawText(renderer: Renderer, text: string, x: number, y: number, wrapWidth: number = Infinity) {
         const cursor = new CursorState(x, y, wrapWidth, this);
         const words = text.split(" ");
         const space = this.getChar(CODEPOINT_SPACE);
