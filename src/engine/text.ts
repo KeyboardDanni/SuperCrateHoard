@@ -123,10 +123,6 @@ export class BMFont {
         );
     }
 
-    private advanceChar(char: BMFontChar, cursor: CursorState) {
-        cursor.x += char.xAdvance;
-    }
-
     drawText(
         renderer: Renderer,
         text: string,

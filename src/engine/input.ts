@@ -88,7 +88,7 @@ export class Input {
         return this.timeHeld(name) === 1;
     }
 
-    autoRepeat(name: string, startDelay: number, repeatDelay: number) {
+    autoRepeat(name: string, startDelay: number = 15, repeatDelay: number = 3) {
         const time = this.timeHeld(name);
 
         return (
