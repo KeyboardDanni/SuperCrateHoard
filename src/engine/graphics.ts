@@ -93,6 +93,8 @@ export class Renderer {
         }
 
         this.drawingContext = context;
+        this.drawingContext.imageSmoothingEnabled = false;
+        this.reset();
 
         document.addEventListener("keydown", (event) => {
             if (event.altKey && event.code == "Enter" && !event.repeat) {
@@ -114,6 +116,15 @@ export class Renderer {
         }
 
         return true;
+    }
+
+    reset() {
+        const context = this.drawingContext;
+
+        context.restore();
+        context.save();
+
+        this.drawBackgroundColor(0, 0, 0);
     }
 
     drawBackgroundColor(r: number, g: number, b: number, a: number = 1.0) {
@@ -146,6 +157,16 @@ export class Renderer {
                 slice.h
             );
         }
+    }
+
+    drawRect(x: number, y: number, w: number, h: number, style: string) {
+        this.drawingContext.fillStyle = style;
+        this.drawingContext.fillRect(x, y, w, h);
+    }
+
+    drawRectOutline(x: number, y: number, w: number, h: number, style: string) {
+        this.drawingContext.strokeStyle = style;
+        this.drawingContext.strokeRect(x, y, w, h);
     }
 
     drawText(
