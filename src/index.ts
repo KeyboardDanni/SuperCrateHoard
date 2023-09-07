@@ -11,9 +11,7 @@ window.onload = function init() {
     input.addAction("up", ["ArrowUp", "KeyW"]);
     input.addAction("down", ["ArrowDown", "KeyS"]);
 
-    gameloop.setScene(() => {
-        return makeMenuScene();
-    });
+    gameloop.setScene(makeMenuScene);
 
     gameloop.run();
 };
