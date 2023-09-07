@@ -93,7 +93,7 @@ class VsyncMeasurer {
     }
 }
 
-export class Gameloop {
+export class Gameloop<SingletonType = unknown> {
     private gameInput: Input;
     private gameRenderer: Renderer;
     private currentScene: Scene = new Scene();
@@ -105,10 +105,19 @@ export class Gameloop {
     private doDraw = false;
     private doLerp = false;
     private running = false;
+    private broken = false;
+    private errorText = "";
+    singleton: SingletonType;
 
-    constructor(canvasId: string) {
+    constructor(canvasId: string, singleton: SingletonType) {
+        this.singleton = singleton;
         this.gameInput = new Input();
         this.gameRenderer = new Renderer(canvasId);
+
+        window.addEventListener("unhandledrejection", (event) => {
+            this.handleError(event.reason, "Unhandled Promise rejection");
+            event.preventDefault();
+        });
     }
 
     run() {
@@ -151,45 +160,15 @@ export class Gameloop {
             this.updateTicks();
             this.updateDraw();
 
-            requestAnimationFrame(this.timerUpdate.bind(this));
-        } catch (exception) {
-            const canvas = this.gameRenderer.canvas();
-            let text = "";
-
-            if (exception instanceof Error) {
-                text = `${exception.name}\n${exception.message}`;
-            } else {
-                text = "Unknown error occurred.";
+            if (this.running && !this.broken) {
+                requestAnimationFrame(this.timerUpdate.bind(this));
             }
+        } catch (error) {
+            this.handleError(error);
+        }
 
-            const [x, y] = [32, 32];
-
-            for (const offset of [
-                [1, 0],
-                [-1, 0],
-                [0, -1],
-                [0, 1],
-            ]) {
-                this.gameRenderer.drawText(
-                    text,
-                    x + offset[0],
-                    y + offset[1],
-                    "14px Consolas",
-                    "rgb(0, 0, 0, 1.0)",
-                    canvas.width - 64
-                );
-            }
-
-            this.gameRenderer.drawText(
-                text,
-                x,
-                y,
-                "14px Consolas",
-                "rgb(255, 255, 255, 1.0)",
-                canvas.width - 64
-            );
-
-            throw exception;
+        if (this.errorText.length > 0) {
+            this.showError();
         }
     }
 
@@ -238,8 +217,65 @@ export class Gameloop {
             this.doDraw = false; // Don't draw next frame until a new logic frame comes in
         }
 
-        this.gameRenderer.drawBackgroundColor(0, 0, 0);
+        this.gameRenderer.reset();
 
         this.currentScene.draw(this, lerpTime);
+    }
+
+    private handleError(error: unknown, note: string = "") {
+        let canvasError = "";
+        let consoleError = "Error reached app toplevel!";
+
+        if (note.length > 0) {
+            consoleError += "\n" + note;
+        }
+
+        if (error instanceof Error) {
+            canvasError = `${error.name}\n${error.message}`;
+            consoleError +=
+                "\n" + error.stack ?? `${error.name}: ${error.message}`;
+        } else {
+            canvasError = "Unknown error occurred.";
+            consoleError += "\n" + String(error);
+        }
+
+        console.error(consoleError);
+
+        this.errorText += canvasError + "\n";
+        this.broken = true;
+    }
+
+    private showError() {
+        if (!this.errorText) {
+            return;
+        }
+
+        const canvas = this.gameRenderer.canvas();
+        const [x, y] = [32, 32];
+
+        for (const offset of [
+            [1, 0],
+            [-1, 0],
+            [0, -1],
+            [0, 1],
+        ]) {
+            this.gameRenderer.drawText(
+                this.errorText,
+                x + offset[0],
+                y + offset[1],
+                "14px Consolas",
+                "rgb(0, 0, 0, 1.0)",
+                canvas.width - 64
+            );
+        }
+
+        this.gameRenderer.drawText(
+            this.errorText,
+            x,
+            y,
+            "14px Consolas",
+            "rgb(255, 255, 255, 1.0)",
+            canvas.width - 64
+        );
     }
 }

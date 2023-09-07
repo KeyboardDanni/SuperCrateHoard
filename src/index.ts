@@ -1,8 +1,9 @@
+import { GameSingleton } from "./game/singleton";
 import { Gameloop } from "./engine/gameloop";
 import { makeMenuScene } from "./game/menu/menuscene";
 
 window.onload = function init() {
-    const gameloop = new Gameloop("game_surface");
+    const gameloop = new Gameloop("game_surface", new GameSingleton());
     const input = gameloop.input();
 
     input.addAction("left", ["ArrowLeft", "KeyA"]);

@@ -1,4 +1,5 @@
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
+import { Level } from "../global/level";
 
 export class BoardToken {
     x: number = 0;
@@ -18,6 +19,11 @@ export enum BoardTileType {
     Floor,
     Wall,
     Dropzone,
+}
+
+export enum BoardTokenType {
+    Player,
+    Crate,
 }
 
 export class TileSlices {
@@ -56,6 +62,77 @@ export class Board {
         this.slices = slices;
         this.tileWidth = slices.wall[0].w;
         this.tileHeight = slices.wall[0].h;
+    }
+
+    static fromLevel(
+        level: Level,
+        picture: Picture,
+        slices: TileSlices,
+        tokenCallback: (
+            tokenType: BoardTokenType,
+            tileType: BoardTileType
+        ) => BoardToken
+    ) {
+        const tiles = level.tiles;
+        let width = 0;
+        const height = tiles.length;
+
+        for (const row of tiles) {
+            width = Math.max(width, row.length);
+        }
+
+        const board = new Board(width, height, picture, slices);
+
+        for (let y = 0; y < height; ++y) {
+            const row = tiles[y];
+
+            for (let x = 0; x < width; ++x) {
+                const letter = row[x];
+                let tile = BoardTileType.None;
+
+                // Tiles
+                switch (letter) {
+                    case undefined:
+                    case " ":
+                    case "@":
+                    case "$":
+                        tile = BoardTileType.Floor;
+                        break;
+                    case "#":
+                        tile = BoardTileType.Wall;
+                        break;
+                    case ".":
+                    case "+":
+                    case "*":
+                        tile = BoardTileType.Dropzone;
+                        break;
+                }
+
+                board.setTile(x, y, tile);
+
+                let token = null;
+
+                // Tokens
+                switch (letter) {
+                    case "@":
+                    case "+":
+                        token = tokenCallback(BoardTokenType.Player, tile);
+                        break;
+                    case "$":
+                    case "*":
+                        token = tokenCallback(BoardTokenType.Crate, tile);
+                        break;
+                }
+
+                if (token) {
+                    token.x = x;
+                    token.y = y;
+                    board.tokens.push(token);
+                }
+            }
+        }
+
+        return board;
     }
 
     private neighborBits(x: number, y: number) {

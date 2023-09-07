@@ -1,3 +1,7 @@
+export function clamp(value: number, low: number, high: number) {
+    return Math.min(Math.max(value, low), high);
+}
+
 export function lerp(a: number, b: number, ratio: number) {
     if (ratio <= 0) {
         return a;
@@ -24,4 +28,18 @@ export function stringListToString(lines: string[]) {
     }
 
     return text.slice(0, -1);
+}
+
+export function fetchAndReadJson(path: string) {
+    const promise = fetch(path).then((response) => {
+        if (!response.ok) {
+            throw Error(
+                `HTTP response ${response.status}: ${response.statusText}`
+            );
+        }
+
+        return response.json();
+    });
+
+    return promise;
 }

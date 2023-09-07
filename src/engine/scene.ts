@@ -64,6 +64,11 @@ export class Scene {
     addDrawLoaderLogic(logic: DrawLogic) {
         this.drawLoaderLogic.push(logic);
     }
+
+    addLoaderLogic(logic: TickLogic & DrawLogic) {
+        this.tickLoaderLogic.push(logic);
+        this.drawLoaderLogic.push(logic);
+    }
 }
 
 export interface TickLogic {
