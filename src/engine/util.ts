@@ -1,5 +1,5 @@
 export function clamp(value: number, low: number, high: number) {
-    return Math.min(Math.max(value, low), high);
+    return Math.max(Math.min(value, high), low);
 }
 
 export function lerp(a: number, b: number, ratio: number) {
