@@ -6,6 +6,7 @@ import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { LevelCollection } from "../global/level";
 import { GameSingleton } from "../singleton";
 import * as fontDescriptor from "../../res/Pixel12x10.json";
+import { plainToClass } from "class-transformer";
 
 enum LoadState {
     None,
@@ -34,7 +35,9 @@ export class LevelFetchLogic implements TickLogic, DrawLogic {
 
         for (const path of levels.levelFiles) {
             const promise = fetchAndReadJson(path).then((levelsAny) => {
-                return Promise.resolve(levelsAny as LevelCollection);
+                const collection = plainToClass(LevelCollection, levelsAny);
+
+                return Promise.resolve(collection);
             });
 
             promises.push(promise);

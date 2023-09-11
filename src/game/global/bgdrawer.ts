@@ -2,7 +2,7 @@ import { Picture } from "../../engine/graphics";
 import { Gameloop } from "../../engine/gameloop";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { lerp } from "../../engine/util";
-import * as gameAtlasJson from "../../res/GameAtlas.json";
+import * as gameAtlasJson from "../../res/GameAtlas32.json";
 
 const slices = gameAtlasJson;
 
@@ -19,7 +19,7 @@ export class BgDrawer implements TickLogic, DrawLogic {
 
     constructor(scrollSpeed: number) {
         this.scrollSpeed = scrollSpeed;
-        this.image = new Picture("res/GameAtlas.png");
+        this.image = new Picture("res/GameAtlas32.png");
     }
 
     createCanvas() {

@@ -113,20 +113,15 @@ export class Board {
         tokenCallback: (tokenType: BoardTokenType, tileType: BoardTileType) => BoardToken
     ) {
         const tiles = level.tiles;
-        let width = 0;
-        const height = tiles.length;
+        const size = level.measureDimensions();
 
-        for (const row of tiles) {
-            width = Math.max(width, row.length);
-        }
-
-        const board = new Board(width, height, picture, slices);
+        const board = new Board(size.x, size.y, picture, slices);
         const players = [];
 
-        for (let y = 0; y < height; ++y) {
+        for (let y = 0; y < size.y; ++y) {
             const row = tiles[y];
 
-            for (let x = 0; x < width; ++x) {
+            for (let x = 0; x < size.x; ++x) {
                 const letter = row[x];
                 let tile = BoardTileType.None;
 

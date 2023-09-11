@@ -6,14 +6,19 @@ import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { GameSingleton } from "../singleton";
 import { Board, BoardTileType, BoardToken, BoardTokenType } from "../board/board";
 import { Level } from "../global/level";
+import { LevelTheme } from "../global/theme";
 
 import * as titleAtlasJson from "../../res/TitleAtlas.json";
-import * as previewAtlasJson from "../../res/PreviewAtlas.json";
+import * as gameAtlas16Json from "../../res/GameAtlas16.json";
+import * as gameAtlas24Json from "../../res/GameAtlas24.json";
+import * as gameAtlas32Json from "../../res/GameAtlas32.json";
 import * as fontDescriptor from "../../res/Pixel12x10.json";
 import * as outlineFontDescriptor from "../../res/Pixel12x10_Outline.json";
 
 const titleSlices = titleAtlasJson;
-const previewSlices = previewAtlasJson;
+const game16Slices = gameAtlas16Json;
+const game24Slices = gameAtlas24Json;
+const game32Slices = gameAtlas32Json;
 
 const PREVIEW_RECT_X = 468;
 const PREVIEW_RECT_W = 500;
@@ -28,9 +33,32 @@ const LEVEL_LIST_SELECTION_OFFSET = 6;
 const LEVEL_LIST_COUNT = 10;
 const LEVEL_LIST_SCROLL_OFFSET = 4;
 
+const SIZE_200_MAX_WIDTH = 12;
+const SIZE_200_MAX_HEIGHT = 8;
+const SIZE_150_MAX_WIDTH = 18;
+const SIZE_150_MAX_HEIGHT = 12;
+
+interface PictureSlicePair {
+    picture: Picture;
+    slices: LevelTheme;
+}
+
 export class MenuLogic implements TickLogic, DrawLogic {
+    private zoomLevels: PictureSlicePair[] = [
+        {
+            picture: new Picture("res/GameAtlas16.png"),
+            slices: game16Slices,
+        },
+        {
+            picture: new Picture("res/GameAtlas24.png"),
+            slices: game24Slices,
+        },
+        {
+            picture: new Picture("res/GameAtlas32.png"),
+            slices: game32Slices,
+        },
+    ];
     private picture = new Picture("res/TitleAtlas.png");
-    private previewPicture = new Picture("res/PreviewAtlas.png");
     private ticks = 0;
     private previewBoard: Board | null = null;
     private font: BMFont;
@@ -43,17 +71,21 @@ export class MenuLogic implements TickLogic, DrawLogic {
         this.outlineFont = new BMFont(outlineFontDescriptor);
     }
 
-    private makePreviewToken(tokenType: BoardTokenType, tileType: BoardTileType) {
+    private makePreviewToken(
+        tokenType: BoardTokenType,
+        tileType: BoardTileType,
+        zoomLevel: PictureSlicePair
+    ) {
         const token = new BoardToken();
+
+        token.picture = zoomLevel.picture;
 
         switch (tokenType) {
             case BoardTokenType.Player:
-                token.picture = this.previewPicture;
-                token.slice = previewSlices.player;
+                token.slice = zoomLevel.slices.playerHead;
                 break;
             case BoardTokenType.Crate:
-                token.picture = this.previewPicture;
-                token.slice = previewSlices.crate[tileType === BoardTileType.Dropzone ? 1 : 0];
+                token.slice = zoomLevel.slices.crate[tileType === BoardTileType.Dropzone ? 1 : 0];
                 break;
         }
 
@@ -76,11 +108,24 @@ export class MenuLogic implements TickLogic, DrawLogic {
 
         if (!level) return;
 
+        const size = level.measureDimensions();
+        let zoomLevel: PictureSlicePair;
+
+        if (size.x <= SIZE_200_MAX_WIDTH && size.y <= SIZE_200_MAX_HEIGHT) {
+            zoomLevel = this.zoomLevels[2];
+        } else if (size.x <= SIZE_150_MAX_WIDTH && size.y <= SIZE_150_MAX_HEIGHT) {
+            zoomLevel = this.zoomLevels[1];
+        } else {
+            zoomLevel = this.zoomLevels[0];
+        }
+
         this.previewBoard = Board.fromLevel(
             level,
-            this.previewPicture,
-            previewSlices,
-            this.makePreviewToken.bind(this)
+            zoomLevel.picture,
+            zoomLevel.slices,
+            (tokenType, tileType) => {
+                return this.makePreviewToken(tokenType, tileType, zoomLevel);
+            }
         );
 
         this.lastCollection = singleton.currentCollection;
