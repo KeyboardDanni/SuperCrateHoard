@@ -136,16 +136,23 @@ export class MenuLogic implements TickLogic, DrawLogic {
         const input = gameloop.input();
         const singleton = gameloop.singleton;
 
-        if (input.autoRepeat("left") && !input.held("right")) {
-            singleton.currentCollection--;
-        } else if (input.autoRepeat("right") && !input.held("left")) {
-            singleton.currentCollection++;
-        }
+        const action = input.autoRepeatNewest(["left", "right", "up", "down"]);
 
-        if (input.autoRepeat("up") && !input.held("down")) {
-            singleton.currentLevel--;
-        } else if (input.autoRepeat("down") && !input.held("up")) {
-            singleton.currentLevel++;
+        switch (action) {
+            case "left":
+                singleton.currentCollection--;
+                singleton.currentLevel = 0;
+                break;
+            case "right":
+                singleton.currentCollection++;
+                singleton.currentLevel = 0;
+                break;
+            case "up":
+                singleton.currentLevel--;
+                break;
+            case "down":
+                singleton.currentLevel++;
+                break;
         }
 
         singleton.currentCollection =

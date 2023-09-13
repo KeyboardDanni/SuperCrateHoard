@@ -1,11 +1,13 @@
 class Action {
     bindings: string[] = [];
     timeHeld: number = 0;
+    sameFrameOrdering: number = 0;
 }
 
 export class Input {
-    private heldKeys: { [id: string]: boolean } = {};
+    private heldKeys: { [id: string]: number } = {};
     private actions: { [id: string]: Action } = {};
+    private newKeysThisFrame = 1;
 
     constructor() {
         document.addEventListener("keydown", (event) => this.keyDownHandler(event));
@@ -17,17 +19,25 @@ export class Input {
     }
 
     private keyDownHandler(event: KeyboardEvent) {
-        this.heldKeys[event.code] = true;
+        this.heldKeys[event.code] = this.newKeysThisFrame;
+
+        this.newKeysThisFrame++;
     }
 
     private keyUpHandler(event: KeyboardEvent) {
-        this.heldKeys[event.code] = false;
+        this.heldKeys[event.code] = 0;
     }
 
     newFrame() {
         actionLoop: for (const action of Object.values(this.actions)) {
             for (const binding of action.bindings) {
-                if (this.heldKeys[binding] === true) {
+                const heldOrder = this.heldKeys[binding];
+
+                if (heldOrder > 0) {
+                    if (action.timeHeld === 0) {
+                        action.sameFrameOrdering = heldOrder;
+                    }
+
                     action.timeHeld++;
                     continue actionLoop;
                 }
@@ -35,6 +45,8 @@ export class Input {
 
             action.timeHeld = 0;
         }
+
+        this.newKeysThisFrame = 1;
     }
 
     addAction(name: string, bindings: string[] = []) {
@@ -86,9 +98,48 @@ export class Input {
         return this.timeHeld(name) === 1;
     }
 
+    newestHeld(names: string[]) {
+        let best = null;
+        let bestHeld = Number.MAX_SAFE_INTEGER;
+        let bestOrder = Number.MAX_SAFE_INTEGER;
+
+        for (const name of names) {
+            const action = this.actions[name];
+
+            if (!action) {
+                continue;
+            }
+
+            const held = action.timeHeld;
+            const order = action.sameFrameOrdering;
+
+            if ((held > 0 && held < bestHeld) || (held === bestHeld && order < bestOrder)) {
+                best = name;
+                bestHeld = held;
+                bestOrder = order;
+            }
+        }
+
+        return best;
+    }
+
     autoRepeat(name: string, startDelay: number = 15, repeatDelay: number = 3) {
         const time = this.timeHeld(name);
 
         return time === 1 || (time >= startDelay && (time - startDelay) % repeatDelay === 0);
+    }
+
+    autoRepeatNewest(names: string[], startDelay: number = 15, repeatDelay: number = 3) {
+        const newestHeld = this.newestHeld(names);
+
+        if (!newestHeld) {
+            return null;
+        }
+
+        const time = this.timeHeld(newestHeld);
+        const active =
+            time === 1 || (time >= startDelay && (time - startDelay) % repeatDelay === 0);
+
+        return active ? newestHeld : null;
     }
 }
