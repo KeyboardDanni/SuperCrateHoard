@@ -116,7 +116,7 @@ export class Board {
         const size = level.measureDimensions();
 
         const board = new Board(size.x, size.y, picture, slices);
-        const players = [];
+        const floodFillWalkers = [];
 
         for (let y = 0; y < size.y; ++y) {
             const row = tiles[y];
@@ -154,7 +154,6 @@ export class Board {
                     case "@":
                     case "+":
                         token = tokenCallback(BoardTokenType.Player, tile);
-                        players.push({ x: x, y: y });
                         break;
                     case "$":
                     case "*":
@@ -166,11 +165,12 @@ export class Board {
                     token.x = x;
                     token.y = y;
                     board.tokens.push(token);
+                    floodFillWalkers.push({ x: x, y: y });
                 }
             }
         }
 
-        board.floodFillFloor(players);
+        board.floodFillFloor(floodFillWalkers);
 
         return board;
     }
