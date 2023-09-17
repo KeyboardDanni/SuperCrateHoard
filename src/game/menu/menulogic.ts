@@ -32,6 +32,7 @@ const LEVEL_LIST_SPACING = 24;
 const LEVEL_LIST_SELECTION_OFFSET = 6;
 const LEVEL_LIST_COUNT = 10;
 const LEVEL_LIST_SCROLL_OFFSET = 4;
+const LEVEL_LIST_TEXT_WIDTH = PREVIEW_RECT_X - 160;
 
 const SIZE_200_MAX_WIDTH = 12;
 const SIZE_200_MAX_HEIGHT = 8;
@@ -259,6 +260,9 @@ export class MenuLogic implements TickLogic, DrawLogic {
             label += `: ${level.name}`;
         }
 
+        const textWidth = this.font.measureText(label);
+        const scale = clamp(LEVEL_LIST_TEXT_WIDTH / textWidth, 0.5, 1.0);
+
         if (isSelected) {
             renderer.drawRect(
                 80 - LEVEL_LIST_SELECTION_OFFSET,
@@ -267,9 +271,22 @@ export class MenuLogic implements TickLogic, DrawLogic {
                 LEVEL_LIST_SPACING,
                 "rgb(255, 255, 255, 1.0"
             );
-            this.outlineFont.drawText(renderer, label, 104, cursor);
+            renderer.context().save();
+            renderer.context().scale(scale, 1.0);
+            this.outlineFont.drawText(
+                renderer,
+                label,
+                104 / scale,
+                cursor,
+                LEVEL_LIST_TEXT_WIDTH * 2,
+                1
+            );
+            renderer.context().restore();
         } else {
-            this.font.drawText(renderer, label, 104, cursor);
+            renderer.context().save();
+            renderer.context().scale(scale, 1.0);
+            this.font.drawText(renderer, label, 104 / scale, cursor, LEVEL_LIST_TEXT_WIDTH * 2, 1);
+            renderer.context().restore();
         }
     }
 

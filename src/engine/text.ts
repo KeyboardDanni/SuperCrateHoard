@@ -112,10 +112,41 @@ export class BMFont {
         );
     }
 
-    drawText(renderer: Renderer, text: string, x: number, y: number, wrapWidth: number = Infinity) {
+    measureText(text: string) {
+        const cursor = new CursorState(0, 0, Infinity, this);
+        const words = text.split(" ");
+        const space = this.getChar(CODEPOINT_SPACE);
+
+        for (const word of words) {
+            const slices = Array.from(word);
+
+            for (const slice of slices) {
+                const id = slice.codePointAt(0) ?? 0;
+                const char = this.readChar(id, cursor);
+
+                if (char) {
+                    cursor.advance(char);
+                }
+            }
+
+            cursor.advance(space);
+        }
+
+        return cursor.x - space.xAdvance;
+    }
+
+    drawText(
+        renderer: Renderer,
+        text: string,
+        x: number,
+        y: number,
+        wrapWidth: number = Infinity,
+        maxLines = Number.MAX_SAFE_INTEGER
+    ) {
         const cursor = new CursorState(x, y, wrapWidth, this);
         const words = text.split(" ");
         const space = this.getChar(CODEPOINT_SPACE);
+        let lines = 0;
 
         for (const word of words) {
             const slices = Array.from(word);
@@ -128,10 +159,16 @@ export class BMFont {
 
                 if (readahead + char.xOffset + char.w > x + wrapWidth) {
                     cursor.newLine();
+                    lines++;
+
                     break;
                 }
 
                 readahead += char.xAdvance;
+            }
+
+            if (lines >= maxLines) {
+                break;
             }
 
             // Actually print the characters
