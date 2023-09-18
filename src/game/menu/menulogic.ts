@@ -191,18 +191,18 @@ export class MenuLogic implements TickLogic, DrawLogic {
         context.save();
         context.scale(2, 2);
 
-        this.font.drawText(renderer, `Level Set   ${name}`, 40, 100);
+        this.font.drawText(renderer, `Levelset   ${name}`, 40, 100);
 
         context.restore();
 
         const bob = Math.sin(this.ticks * 0.1) * 3;
 
-        renderer.drawSprite(this.picture, titleSlices.arrowLeft, 310 - bob, 202);
-        renderer.drawSprite(this.picture, titleSlices.arrowRight, 334 + bob, 202);
+        renderer.drawSprite(this.picture, titleSlices.arrowLeft, 286 - bob, 202);
+        renderer.drawSprite(this.picture, titleSlices.arrowRight, 310 + bob, 202);
 
         if (collection) {
-            this.font.drawText(renderer, `by ${author}`, 80, 238, width - 140);
-            this.font.drawText(renderer, collection.description, 80, 266, width - 140);
+            this.font.drawText(renderer, `by ${author}`, 80, 238, width - 140, 1);
+            this.font.drawText(renderer, collection.description, 80, 266, width - 140, 2);
         }
     }
 
