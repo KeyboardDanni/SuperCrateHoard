@@ -1,13 +1,15 @@
 import { BgDrawer } from "../global/bgdrawer";
-import { Scene } from "../../engine/scene";
+import { Input } from "../../engine/input";
 import { MenuLogic } from "./menulogic";
 import { LevelFetchLogic } from "./levelfetchlogic";
+import { FocusableScene } from "../global/focus";
+import { OptionsLogic } from "../global/optionslogic";
 
-class MenuScene extends Scene {
+class MenuScene extends FocusableScene {
     levelFetchLogic: LevelFetchLogic;
 
-    constructor(levelFetchLogic: LevelFetchLogic) {
-        super();
+    constructor(input: Input, levelFetchLogic: LevelFetchLogic) {
+        super(input);
 
         this.levelFetchLogic = levelFetchLogic;
     }
@@ -17,17 +19,20 @@ class MenuScene extends Scene {
     }
 }
 
-export function makeMenuScene() {
+export function makeMenuScene(input: Input) {
     const bgDrawer = new BgDrawer(0.25);
     const levelFetchLogic = new LevelFetchLogic();
-    const menuLogic = new MenuLogic();
 
-    const scene = new MenuScene(levelFetchLogic);
+    const scene = new MenuScene(input, levelFetchLogic);
+
+    const menuLogic = new MenuLogic(scene);
+    const optionsLogic = new OptionsLogic(scene);
 
     scene.addDrawLoaderLogic(bgDrawer);
     scene.addLoaderLogic(levelFetchLogic);
     scene.addLogic(bgDrawer);
     scene.addLogic(menuLogic);
+    scene.addLogic(optionsLogic);
 
     return scene;
 }

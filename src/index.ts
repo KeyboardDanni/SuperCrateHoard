@@ -33,8 +33,11 @@ window.onload = function init() {
     input.addAction("right", ["ArrowRight", "KeyD"]);
     input.addAction("up", ["ArrowUp", "KeyW"]);
     input.addAction("down", ["ArrowDown", "KeyS"]);
+    input.addAction("menu", ["Backspace", "Escape"]);
 
-    gameloop.setScene(makeMenuScene);
+    gameloop.setScene(() => {
+        return makeMenuScene(gameloop.input());
+    });
 
     gameloop.run();
 };

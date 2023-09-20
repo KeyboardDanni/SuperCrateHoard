@@ -4,6 +4,7 @@ import { BMFont } from "../../engine/text";
 import { centered, clamp } from "../../engine/util";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { GameSingleton } from "../singleton";
+import { Focusable, FocusableScene } from "..//global/focus";
 import { Board, BoardTileType, BoardToken, BoardTokenType } from "../board/board";
 import { Level } from "../global/level";
 import { LevelTheme } from "../global/theme";
@@ -39,12 +40,14 @@ const SIZE_200_MAX_HEIGHT = 8;
 const SIZE_150_MAX_WIDTH = 18;
 const SIZE_150_MAX_HEIGHT = 12;
 
+const FOCUS_PRIORITY_MAIN_MENU = 0;
+
 interface PictureSlicePair {
     picture: Picture;
     slices: LevelTheme;
 }
 
-export class MenuLogic implements TickLogic, DrawLogic {
+export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
     private zoomLevels: PictureSlicePair[] = [
         {
             picture: new Picture("res/GameAtlas16.png"),
@@ -67,9 +70,39 @@ export class MenuLogic implements TickLogic, DrawLogic {
     private lastCollection = -1;
     private lastLevel = -1;
 
-    constructor() {
+    constructor(scene: FocusableScene) {
+        super(scene);
+
         this.font = new BMFont(fontDescriptor);
         this.outlineFont = new BMFont(outlineFontDescriptor);
+    }
+
+    focusTick(gameloop: Gameloop<GameSingleton>, scene: Scene): void {
+        const input = gameloop.input();
+        const singleton = gameloop.singleton;
+
+        const action = input.autoRepeatNewest(["left", "right", "up", "down"]);
+
+        switch (action) {
+            case "left":
+                singleton.currentCollection--;
+                singleton.currentLevel = 0;
+                break;
+            case "right":
+                singleton.currentCollection++;
+                singleton.currentLevel = 0;
+                break;
+            case "up":
+                singleton.currentLevel--;
+                break;
+            case "down":
+                singleton.currentLevel++;
+                break;
+        }
+
+        if (input.justPressed("menu")) {
+            scene.pushEvent("openMenu");
+        }
     }
 
     private makePreviewToken(
@@ -134,27 +167,7 @@ export class MenuLogic implements TickLogic, DrawLogic {
     }
 
     tick(gameloop: Gameloop<GameSingleton>, _scene: Scene) {
-        const input = gameloop.input();
         const singleton = gameloop.singleton;
-
-        const action = input.autoRepeatNewest(["left", "right", "up", "down"]);
-
-        switch (action) {
-            case "left":
-                singleton.currentCollection--;
-                singleton.currentLevel = 0;
-                break;
-            case "right":
-                singleton.currentCollection++;
-                singleton.currentLevel = 0;
-                break;
-            case "up":
-                singleton.currentLevel--;
-                break;
-            case "down":
-                singleton.currentLevel++;
-                break;
-        }
 
         singleton.currentCollection =
             (singleton.currentCollection + singleton.levels.length) % singleton.levels.length;
@@ -171,6 +184,8 @@ export class MenuLogic implements TickLogic, DrawLogic {
         this.updatePreview(singleton);
 
         this.ticks++;
+
+        this.keepActive(FOCUS_PRIORITY_MAIN_MENU);
     }
 
     private drawCollectionSelector(renderer: Renderer, singleton: GameSingleton) {

@@ -51,7 +51,6 @@ export class BMFont {
     readonly lineHeight: number;
 
     // Takes a bmfont2json-generated descriptor
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(descriptor: any) {
         this.lineHeight = descriptor.common.lineHeight;
         this.pages = descriptor.pages.map((path: string) => new Picture(path));
