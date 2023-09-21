@@ -29,8 +29,10 @@ interface Menu {
 interface LabelItem {
     x: number;
     y: number;
-    alignment: TextAlignment;
     text: (logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => string;
+    alignment: TextAlignment;
+    maxWidth: number;
+    maxLines: number;
 }
 
 interface ButtonItem extends LabelItem {
@@ -38,23 +40,27 @@ interface ButtonItem extends LabelItem {
 }
 
 const OPTIONS_MENU_ITEMS: Menu = {
-    width: 640,
-    height: 192,
+    width: 352,
+    height: 224,
     buttons: [
         {
             x: 0,
-            y: 96,
+            y: 128,
             text: () => "Continue",
             alignment: TextAlignment.Center,
+            maxWidth: -1,
+            maxLines: 1,
             onActivate: (logic) => {
                 logic.close();
             },
         },
         {
             x: 0,
-            y: 128,
+            y: 160,
             text: () => "Main Menu",
             alignment: TextAlignment.Center,
+            maxWidth: -1,
+            maxLines: 1,
             onActivate: (_logic, gameloop) => {
                 gameloop.setScene(() => {
                     return makeMenuScene(gameloop.input());
@@ -67,6 +73,26 @@ const OPTIONS_MENU_ITEMS: Menu = {
             x: 16,
             y: 16,
             alignment: TextAlignment.Left,
+            maxWidth: -1,
+            maxLines: 1,
+            text: (_logic, gameloop) => {
+                const singleton = gameloop.singleton;
+
+                const collection = singleton.levels[singleton.currentCollection];
+
+                if (!collection) {
+                    return "";
+                }
+
+                return `${collection.name}`;
+            },
+        },
+        {
+            x: 16,
+            y: 48,
+            alignment: TextAlignment.Left,
+            maxWidth: 320,
+            maxLines: 2,
             text: (_logic, gameloop) => {
                 const singleton = gameloop.singleton;
 
@@ -88,7 +114,7 @@ const OPTIONS_MENU_ITEMS: Menu = {
                     name += `: ${level.name}`;
                 }
 
-                return `${collection.name}\n${name}`;
+                return `${name}`;
             },
         },
     ],
@@ -181,6 +207,7 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
 
         const drawText = (item: LabelItem, selected: boolean) => {
             let x = startX + item.x;
+            const maxWidth = item.maxWidth > 0 ? item.maxWidth : menuWidth - item.x;
             const text = item.text(this, gameloop);
 
             if (item.alignment === TextAlignment.Center) {
@@ -189,7 +216,7 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
                 x += centered(textWidth, menuWidth);
             }
 
-            this.font.drawText(renderer, text, x, startY + item.y, menuWidth - item.x, 1);
+            this.font.drawText(renderer, text, x, startY + item.y, maxWidth, item.maxLines);
 
             if (selected) {
                 renderer.drawSprite(
