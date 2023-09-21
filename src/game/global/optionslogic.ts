@@ -40,12 +40,12 @@ interface ButtonItem extends LabelItem {
 }
 
 const OPTIONS_MENU_ITEMS: Menu = {
-    width: 352,
+    width: 640,
     height: 224,
     buttons: [
         {
             x: 0,
-            y: 128,
+            y: 160,
             text: () => "Continue",
             alignment: TextAlignment.Center,
             maxWidth: -1,
@@ -56,7 +56,7 @@ const OPTIONS_MENU_ITEMS: Menu = {
         },
         {
             x: 0,
-            y: 160,
+            y: 192,
             text: () => "Main Menu",
             alignment: TextAlignment.Center,
             maxWidth: -1,
@@ -70,9 +70,9 @@ const OPTIONS_MENU_ITEMS: Menu = {
     ],
     labels: [
         {
-            x: 16,
+            x: 0,
             y: 16,
-            alignment: TextAlignment.Left,
+            alignment: TextAlignment.Center,
             maxWidth: -1,
             maxLines: 1,
             text: (_logic, gameloop) => {
@@ -84,14 +84,43 @@ const OPTIONS_MENU_ITEMS: Menu = {
                     return "";
                 }
 
-                return `${collection.name}`;
+                return `Levelset: ${collection.name}`;
             },
         },
         {
             x: 16,
             y: 48,
             alignment: TextAlignment.Left,
-            maxWidth: 320,
+            maxWidth: 608,
+            maxLines: 1,
+            text: (_logic, gameloop) => {
+                const singleton = gameloop.singleton;
+
+                const collection = singleton.levels[singleton.currentCollection];
+
+                if (!collection) {
+                    return "";
+                }
+
+                const level = collection.levels[singleton.currentLevel];
+                let name = `Level ${singleton.currentLevel + 1}`;
+
+                if (!level) {
+                    return "";
+                }
+
+                if (level.name && level.name.length > 0) {
+                    name += `: ${level.name}`;
+                }
+
+                return name;
+            },
+        },
+        {
+            x: 16,
+            y: 80,
+            alignment: TextAlignment.Left,
+            maxWidth: 608,
             maxLines: 2,
             text: (_logic, gameloop) => {
                 const singleton = gameloop.singleton;
@@ -108,13 +137,15 @@ const OPTIONS_MENU_ITEMS: Menu = {
                     return "";
                 }
 
-                let name = `Level ${singleton.currentLevel + 1}`;
+                let author = "Anonymous";
 
-                if (level.name) {
-                    name += `: ${level.name}`;
+                if (level.author && level.author.length > 0) {
+                    author = level.author;
+                } else if (collection.author.length > 0) {
+                    author = collection.author;
                 }
 
-                return `${name}`;
+                return `by ${author}`;
             },
         },
     ],
