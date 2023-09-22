@@ -19,13 +19,21 @@ export class Input {
     }
 
     private keyDownHandler(event: KeyboardEvent) {
-        this.heldKeys[event.code] = this.newKeysThisFrame;
+        // Fullscreen combo should not send Enter keypress
+        if (event.altKey && event.code == "Enter") {
+            return;
+        }
 
+        this.heldKeys[event.code] = this.newKeysThisFrame;
         this.newKeysThisFrame++;
+
+        event.preventDefault();
     }
 
     private keyUpHandler(event: KeyboardEvent) {
         this.heldKeys[event.code] = 0;
+
+        event.preventDefault();
     }
 
     newFrame() {
