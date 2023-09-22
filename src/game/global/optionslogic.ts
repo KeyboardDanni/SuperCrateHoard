@@ -227,12 +227,12 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
         const startX = centered(menuWidth, width);
         const startY = centered(menuHeight, height);
 
-        renderer.drawRect(startX, startY, menuWidth, menuHeight, "rgb(0, 0, 0, 0.7)");
+        renderer.drawRect(startX, startY, menuWidth, menuHeight, "rgb(22, 26, 55, 0.85)");
         renderer.drawRectOutline(
             startX - 0.5,
             startY - 0.5,
-            menuWidth,
-            menuHeight,
+            menuWidth + 1,
+            menuHeight + 1,
             "rgb(224, 224, 224, 0.7)"
         );
 
