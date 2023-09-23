@@ -1,4 +1,4 @@
-import { PictureSlice } from "../../engine/graphics";
+import { Picture, PictureSlice } from "../../engine/graphics";
 
 export interface LevelTheme {
     wall: PictureSlice[];
@@ -12,4 +12,9 @@ export interface LevelTheme {
     playerWin: PictureSlice;
     playerHead: PictureSlice;
     crate: PictureSlice[];
+}
+
+export interface PictureSlicePair {
+    picture: Picture;
+    slices: LevelTheme;
 }

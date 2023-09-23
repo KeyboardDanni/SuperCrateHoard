@@ -1,3 +1,4 @@
+import { LevelTheme } from "../global/theme";
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 import { Level } from "../global/level";
 
@@ -6,11 +7,33 @@ class FloodFillWalker {
     y = 0;
 }
 
+export interface TokenToSpawn {
+    x: number;
+    y: number;
+    tokenType: BoardTokenType;
+}
+
 export class BoardToken {
-    x: number = 0;
-    y: number = 0;
+    private x: number = 0;
+    private y: number = 0;
     picture: Picture | null = null;
     slice: PictureSlice = new PictureSlice(0, 0, 0, 0);
+    readonly board: Board;
+
+    constructor(x: number, y: number, board: Board) {
+        this.x = x;
+        this.y = y;
+        this.board = board;
+    }
+
+    getPosition() {
+        return [this.x, this.y];
+    }
+
+    setPosition(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
 
     draw(renderer: Renderer, targetX: number, targetY: number) {
         if (this.picture) {
@@ -31,12 +54,6 @@ export enum BoardTokenType {
     Crate,
 }
 
-export class TileSlices {
-    wall: PictureSlice[] = [];
-    floor: PictureSlice[] = [];
-    dropzone: PictureSlice[] = [];
-}
-
 export class Board {
     x: number = 0;
     y: number = 0;
@@ -44,14 +61,14 @@ export class Board {
     readonly height: number;
     readonly tileWidth: number;
     readonly tileHeight: number;
+    readonly picture: Picture;
+    readonly slices: LevelTheme;
     private tiles: BoardTileType[];
     private displayTiles: (PictureSlice | null)[];
-    private picture: Picture;
-    private slices: TileSlices;
     private dirty = true;
-    tokens: BoardToken[] = [];
+    private tokens: BoardToken[] = [];
 
-    constructor(width: number, height: number, picture: Picture, slices: TileSlices) {
+    constructor(width: number, height: number, picture: Picture, slices: LevelTheme) {
         this.width = width;
         this.height = height;
         this.tiles = new Array(width * height);
@@ -109,14 +126,15 @@ export class Board {
     static fromLevel(
         level: Level,
         picture: Picture,
-        slices: TileSlices,
-        tokenCallback: (tokenType: BoardTokenType, tileType: BoardTileType) => BoardToken
+        slices: LevelTheme,
+        tokenCallback: (board: Board, tokensToSpawn: TokenToSpawn[]) => void
     ) {
         const tiles = level.tiles;
         const size = level.measureDimensions();
 
         const board = new Board(size.x, size.y, picture, slices);
         const floodFillWalkers = [];
+        const tokensToSpawn: TokenToSpawn[] = [];
 
         for (let y = 0; y < size.y; ++y) {
             const row = tiles[y];
@@ -147,28 +165,25 @@ export class Board {
 
                 board.setTile(x, y, tile);
 
-                let token = null;
-
                 // Tokens
                 switch (letter) {
                     case "@":
                     case "+":
-                        token = tokenCallback(BoardTokenType.Player, tile);
+                        tokensToSpawn.push({ x: x, y: y, tokenType: BoardTokenType.Player });
                         break;
                     case "$":
                     case "*":
-                        token = tokenCallback(BoardTokenType.Crate, tile);
+                        tokensToSpawn.push({ x: x, y: y, tokenType: BoardTokenType.Crate });
                         break;
-                }
-
-                if (token) {
-                    token.x = x;
-                    token.y = y;
-                    board.tokens.push(token);
-                    floodFillWalkers.push({ x: x, y: y });
                 }
             }
         }
+
+        for (const token of tokensToSpawn) {
+            floodFillWalkers.push({ x: token.x, y: token.y });
+        }
+
+        tokenCallback(board, tokensToSpawn);
 
         board.floodFillFloor(floodFillWalkers);
 
@@ -214,6 +229,18 @@ export class Board {
                 ++i;
             }
         }
+    }
+
+    addToken(token: BoardToken) {
+        if (token.board !== this) {
+            throw new Error("Token does not belong to board");
+        }
+
+        this.tokens.push(token);
+    }
+
+    getTokens(): readonly BoardToken[] {
+        return this.tokens;
     }
 
     posToIndex(x: number, y: number) {
@@ -270,8 +297,9 @@ export class Board {
         }
 
         for (const token of this.tokens) {
-            const x = token.x * this.tileWidth + this.x;
-            const y = token.y * this.tileHeight + this.y;
+            const [tokenX, tokenY] = token.getPosition();
+            const x = tokenX * this.tileWidth + this.x;
+            const y = tokenY * this.tileHeight + this.y;
 
             token.draw(renderer, x, y);
         }

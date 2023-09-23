@@ -4,10 +4,11 @@ import { BMFont } from "../../engine/text";
 import { centered, clamp } from "../../engine/util";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { GameSingleton } from "../singleton";
-import { Focusable, FocusableScene } from "..//global/focus";
-import { Board, BoardTileType, BoardToken, BoardTokenType } from "../board/board";
+import { Focusable, FocusableScene } from "../global/focus";
+import { makePlayScene } from "../play/playscene";
+import { Board, BoardTileType, BoardToken, BoardTokenType, TokenToSpawn } from "../board/board";
 import { Level } from "../global/level";
-import { LevelTheme } from "../global/theme";
+import { PictureSlicePair } from "../global/theme";
 
 import * as titleAtlasJson from "../../res/TitleAtlas.json";
 import * as gameAtlas16Json from "../../res/GameAtlas16.json";
@@ -41,11 +42,6 @@ const SIZE_150_MAX_WIDTH = 18;
 const SIZE_150_MAX_HEIGHT = 12;
 
 const FOCUS_PRIORITY_MAIN_MENU = 0;
-
-interface PictureSlicePair {
-    picture: Picture;
-    slices: LevelTheme;
-}
 
 export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
     private zoomLevels: PictureSlicePair[] = [
@@ -100,30 +96,34 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
                 break;
         }
 
+        if (input.justPressed("accept") && this.previewBoard) {
+            gameloop.setScene(() => {
+                return makePlayScene(gameloop);
+            });
+        }
         if (input.justPressed("menu")) {
             scene.pushEvent("openMenu");
         }
     }
 
-    private makePreviewToken(
-        tokenType: BoardTokenType,
-        tileType: BoardTileType,
-        zoomLevel: PictureSlicePair
-    ) {
-        const token = new BoardToken();
+    private makePreviewTokens(board: Board, tokensToSpawn: TokenToSpawn[]) {
+        for (const toSpawn of tokensToSpawn) {
+            const token = new BoardToken(toSpawn.x, toSpawn.y, board);
+            const tile = board.tile(toSpawn.x, toSpawn.y);
 
-        token.picture = zoomLevel.picture;
+            token.picture = board.picture;
 
-        switch (tokenType) {
-            case BoardTokenType.Player:
-                token.slice = zoomLevel.slices.playerHead;
-                break;
-            case BoardTokenType.Crate:
-                token.slice = zoomLevel.slices.crate[tileType === BoardTileType.Dropzone ? 1 : 0];
-                break;
+            switch (toSpawn.tokenType) {
+                case BoardTokenType.Player:
+                    token.slice = board.slices.playerHead;
+                    break;
+                case BoardTokenType.Crate:
+                    token.slice = board.slices.crate[tile === BoardTileType.Dropzone ? 1 : 0];
+                    break;
+            }
+
+            board.addToken(token);
         }
-
-        return token;
     }
 
     private updatePreview(singleton: GameSingleton) {
@@ -157,8 +157,8 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             level,
             zoomLevel.picture,
             zoomLevel.slices,
-            (tokenType, tileType) => {
-                return this.makePreviewToken(tokenType, tileType, zoomLevel);
+            (board, tokensToSpawn) => {
+                this.makePreviewTokens(board, tokensToSpawn);
             }
         );
 
