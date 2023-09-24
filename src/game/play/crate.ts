@@ -1,4 +1,5 @@
-import { Board, BoardTileType, BoardToken } from "../board/board";
+import { BoardToken, Direction, directionToOffset } from "../board/token";
+import { Board, BoardTileType } from "../board/board";
 
 export class Crate extends BoardToken {
     private theme;
@@ -11,5 +12,24 @@ export class Crate extends BoardToken {
         this.picture = board.picture;
         this.theme = board.slices;
         this.slice = this.theme.crate[tile === BoardTileType.Dropzone ? 1 : 0];
+    }
+
+    tryPush(direction: Direction) {
+        const pos = this.getPosition();
+        const offset = directionToOffset(direction);
+        const newX = pos.x + offset.x;
+        const newY = pos.y + offset.y;
+
+        if (this.isFree(newX, newY)) {
+            this.board.moveToken(this, newX, newY);
+            this.setPosition(newX, newY);
+
+            const tile = this.board.tile(newX, newY);
+            this.slice = this.theme.crate[tile === BoardTileType.Dropzone ? 1 : 0];
+
+            return true;
+        }
+
+        return false;
     }
 }

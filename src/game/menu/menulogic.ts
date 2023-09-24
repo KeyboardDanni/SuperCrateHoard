@@ -6,7 +6,8 @@ import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { GameSingleton } from "../singleton";
 import { Focusable, FocusableScene } from "../global/focus";
 import { makePlayScene } from "../play/playscene";
-import { Board, BoardTileType, BoardToken, BoardTokenType, TokenToSpawn } from "../board/board";
+import { Board, BoardTileType } from "../board/board";
+import { BoardToken, BoardTokenType, TokenToSpawn } from "../board/token";
 import { Level } from "../global/level";
 import { PictureSlicePair } from "../global/theme";
 

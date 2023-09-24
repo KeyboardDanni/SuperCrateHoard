@@ -4,11 +4,12 @@ import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { centered } from "../../engine/util";
 import { GameSingleton } from "../singleton";
 import { Focusable, FocusableScene } from "../global/focus";
-import { Board, BoardTokenType, TokenToSpawn } from "../board/board";
-
-import * as gameAtlas32Json from "../../res/GameAtlas32.json";
+import { Board } from "../board/board";
+import { BoardTokenType, Direction, TokenToSpawn } from "../board/token";
 import { Player } from "./player";
 import { Crate } from "./crate";
+
+import * as gameAtlas32Json from "../../res/GameAtlas32.json";
 
 const game32Slices = gameAtlas32Json;
 
@@ -17,6 +18,7 @@ const FOCUS_PRIORITY_PLAY = 0;
 export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     private picture: Picture = new Picture("res/GameAtlas32.png");
     private board: Board;
+    private action: string | null = null;
 
     constructor(gameloop: Gameloop<GameSingleton>, scene: FocusableScene) {
         super(scene);
@@ -57,15 +59,51 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         }
     }
 
+    private getPlayers(): Player[] {
+        const tokens = this.board.getTokens();
+
+        return tokens.filter((token) => token instanceof Player) as Player[];
+    }
+
     focusTick(gameloop: Gameloop<GameSingleton>, scene: Scene): void {
         const input = gameloop.input();
 
         if (input.justPressed("menu")) {
             scene.pushEvent("openMenu");
         }
+
+        this.action = input.autoRepeatNewest(["left", "right", "up", "down"]);
     }
 
     tick(_gameloop: Gameloop, _scene: Scene): void {
+        if (this.action) {
+            let direction = null;
+
+            switch (this.action) {
+                case "left":
+                    direction = Direction.Left;
+                    break;
+                case "right":
+                    direction = Direction.Right;
+                    break;
+                case "up":
+                    direction = Direction.Up;
+                    break;
+                case "down":
+                    direction = Direction.Down;
+                    break;
+            }
+
+            if (direction !== null) {
+                const players = this.getPlayers();
+
+                for (const player of players) {
+                    player.tryWalk(direction);
+                }
+            }
+        }
+
+        this.action = null;
         this.keepActive(FOCUS_PRIORITY_PLAY);
     }
 

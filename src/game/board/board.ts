@@ -1,57 +1,13 @@
 import { LevelTheme } from "../global/theme";
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 import { Level } from "../global/level";
-
-class FloodFillWalker {
-    x = 0;
-    y = 0;
-}
-
-export interface TokenToSpawn {
-    x: number;
-    y: number;
-    tokenType: BoardTokenType;
-}
-
-export class BoardToken {
-    private x: number = 0;
-    private y: number = 0;
-    picture: Picture | null = null;
-    slice: PictureSlice = new PictureSlice(0, 0, 0, 0);
-    readonly board: Board;
-
-    constructor(x: number, y: number, board: Board) {
-        this.x = x;
-        this.y = y;
-        this.board = board;
-    }
-
-    getPosition() {
-        return [this.x, this.y];
-    }
-
-    setPosition(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-
-    draw(renderer: Renderer, targetX: number, targetY: number) {
-        if (this.picture) {
-            renderer.drawSprite(this.picture, this.slice, targetX, targetY);
-        }
-    }
-}
+import { BoardToken, BoardTokenType, Position, TokenToSpawn } from "./token";
 
 export enum BoardTileType {
     None,
     Floor,
     Wall,
     Dropzone,
-}
-
-export enum BoardTokenType {
-    Player,
-    Crate,
 }
 
 export class Board {
@@ -67,6 +23,8 @@ export class Board {
     private displayTiles: (PictureSlice | null)[];
     private dirty = true;
     private tokens: BoardToken[] = [];
+    private tokenPositions: Map<BoardToken, Position> = new Map();
+    private tileTokens: BoardToken[][];
 
     constructor(width: number, height: number, picture: Picture, slices: LevelTheme) {
         this.width = width;
@@ -79,9 +37,14 @@ export class Board {
         this.slices = slices;
         this.tileWidth = slices.wall[0].w;
         this.tileHeight = slices.wall[0].h;
+        this.tileTokens = new Array(width * height);
+
+        for (let i = 0; i < width * height; ++i) {
+            this.tileTokens[i] = [];
+        }
     }
 
-    private floodFillFloor(initialWalkers: FloodFillWalker[]) {
+    private floodFillFloor(initialWalkers: Position[]) {
         let walkers = initialWalkers;
         const covered = Array<boolean>(this.width * this.height).fill(false);
 
@@ -236,19 +199,72 @@ export class Board {
             throw new Error("Token does not belong to board");
         }
 
+        const pos = token.getPosition();
+
         this.tokens.push(token);
+        this.tokenPositions.set(token, { x: Math.round(pos.x), y: Math.round(pos.y) });
+        this.addTokenToTile(token, pos.x, pos.y);
     }
 
     getTokens(): readonly BoardToken[] {
         return this.tokens;
     }
 
+    tokensForTile(x: number, y: number): ReadonlyArray<BoardToken> {
+        if (!this.posInRange(x, y)) {
+            return [];
+        }
+
+        return this.tileTokens[this.posToIndex(x, y)];
+    }
+
+    private removeTokenFromTile(token: BoardToken, x: number, y: number) {
+        if (!this.posInRange(x, y)) {
+            return;
+        }
+
+        const list = this.tileTokens[this.posToIndex(x, y)];
+        const index = list.indexOf(token);
+
+        if (index > -1) {
+            list.splice(index, 1);
+        }
+    }
+
+    private addTokenToTile(token: BoardToken, x: number, y: number) {
+        if (!this.posInRange(x, y)) {
+            return;
+        }
+
+        const list = this.tileTokens[this.posToIndex(x, y)];
+
+        list.push(token);
+    }
+
+    moveToken(token: BoardToken, x: number, y: number) {
+        const oldPos = this.tokenPositions.get(token);
+
+        if (oldPos) {
+            this.removeTokenFromTile(token, oldPos.x, oldPos.y);
+        }
+
+        this.addTokenToTile(token, x, y);
+
+        this.tokenPositions.set(token, { x: Math.round(x), y: Math.round(y) });
+    }
+
     posToIndex(x: number, y: number) {
-        return x + y * this.width;
+        const tileX = Math.round(x);
+        const tileY = Math.round(y);
+
+        return tileX + tileY * this.width;
     }
 
     posInRange(x: number, y: number) {
-        if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+        const tileX = Math.round(x);
+        const tileY = Math.round(y);
+
+        if (tileX < 0 || tileX >= this.width || tileY < 0 || tileY >= this.height) {
             return false;
         }
 
@@ -297,9 +313,9 @@ export class Board {
         }
 
         for (const token of this.tokens) {
-            const [tokenX, tokenY] = token.getPosition();
-            const x = tokenX * this.tileWidth + this.x;
-            const y = tokenY * this.tileHeight + this.y;
+            const pos = token.getPosition();
+            const x = pos.x * this.tileWidth + this.x;
+            const y = pos.y * this.tileHeight + this.y;
 
             token.draw(renderer, x, y);
         }
