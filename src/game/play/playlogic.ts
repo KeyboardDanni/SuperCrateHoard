@@ -6,7 +6,7 @@ import { GameSingleton } from "../singleton";
 import { Focusable, FocusableScene } from "../global/focus";
 import { Board } from "../board/board";
 import { BoardTokenType, Direction, TokenToSpawn } from "../board/token";
-import { Player } from "./player";
+import { Orientation, Player } from "./player";
 import { Crate } from "./crate";
 
 import * as gameAtlas32Json from "../../res/GameAtlas32.json";
@@ -15,10 +15,23 @@ const game32Slices = gameAtlas32Json;
 
 const FOCUS_PRIORITY_PLAY = 0;
 
+enum Action {
+    WalkLeft,
+    WalkRight,
+    WalkUp,
+    WalkDown,
+    PushLeft,
+    PushRight,
+    PushUp,
+    PushDown,
+}
+
 export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     private picture: Picture = new Picture("res/GameAtlas32.png");
     private board: Board;
     private action: string | null = null;
+    private history: Action[] = [];
+    private redoHistory: Action[] = [];
 
     constructor(gameloop: Gameloop<GameSingleton>, scene: FocusableScene) {
         super(scene);
@@ -59,10 +72,112 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         }
     }
 
-    private getPlayers(): Player[] {
+    private getPlayer(): Player {
         const tokens = this.board.getTokens();
 
-        return tokens.filter((token) => token instanceof Player) as Player[];
+        return tokens.find((token) => token instanceof Player) as Player;
+    }
+
+    private tryWalk(direction: Direction, orientation: Orientation = Orientation.Forward) {
+        const player = this.getPlayer();
+
+        return player.tryWalk(direction, orientation);
+    }
+
+    private tryPush(direction: Direction) {
+        const player = this.getPlayer();
+
+        return player.tryPush(direction);
+    }
+
+    private tryPull(direction: Direction) {
+        const player = this.getPlayer();
+
+        return player.tryPull(direction);
+    }
+
+    private doAction(action: Action): boolean {
+        switch (action) {
+            case Action.WalkLeft:
+                return this.tryWalk(Direction.Left);
+            case Action.WalkRight:
+                return this.tryWalk(Direction.Right);
+            case Action.WalkUp:
+                return this.tryWalk(Direction.Up);
+            case Action.WalkDown:
+                return this.tryWalk(Direction.Down);
+            case Action.PushLeft:
+                return this.tryPush(Direction.Left);
+            case Action.PushRight:
+                return this.tryPush(Direction.Right);
+            case Action.PushUp:
+                return this.tryPush(Direction.Up);
+            case Action.PushDown:
+                return this.tryPush(Direction.Down);
+        }
+    }
+
+    private undoAction(action: Action): boolean {
+        switch (action) {
+            case Action.WalkLeft:
+                return this.tryWalk(Direction.Right, Orientation.Backward);
+            case Action.WalkRight:
+                return this.tryWalk(Direction.Left, Orientation.Backward);
+            case Action.WalkUp:
+                return this.tryWalk(Direction.Down, Orientation.Backward);
+            case Action.WalkDown:
+                return this.tryWalk(Direction.Up, Orientation.Backward);
+            case Action.PushLeft:
+                return this.tryPull(Direction.Right);
+            case Action.PushRight:
+                return this.tryPull(Direction.Left);
+            case Action.PushUp:
+                return this.tryPull(Direction.Down);
+            case Action.PushDown:
+                return this.tryPull(Direction.Up);
+        }
+    }
+
+    private tryAction(action: Action): boolean {
+        if (this.doAction(action)) {
+            this.history.push(action);
+            this.redoHistory = [];
+            return true;
+        }
+
+        return false;
+    }
+
+    private undo(): boolean {
+        if (this.history.length <= 0) {
+            return false;
+        }
+
+        const action = this.history[this.history.length - 1];
+
+        if (this.undoAction(action)) {
+            this.history.pop();
+            this.redoHistory.push(action);
+            return true;
+        }
+
+        return false;
+    }
+
+    private redo(): boolean {
+        if (this.redoHistory.length <= 0) {
+            return false;
+        }
+
+        const action = this.redoHistory[this.redoHistory.length - 1];
+
+        if (this.doAction(action)) {
+            this.redoHistory.pop();
+            this.history.push(action);
+            return true;
+        }
+
+        return false;
     }
 
     focusTick(gameloop: Gameloop<GameSingleton>, scene: Scene): void {
@@ -72,34 +187,30 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
             scene.pushEvent("openMenu");
         }
 
-        this.action = input.autoRepeatNewest(["left", "right", "up", "down"]);
+        this.action = input.autoRepeatNewest(["left", "right", "up", "down", "undo", "redo"]);
     }
 
     tick(_gameloop: Gameloop, _scene: Scene): void {
         if (this.action) {
-            let direction = null;
-
             switch (this.action) {
                 case "left":
-                    direction = Direction.Left;
+                    this.tryAction(Action.WalkLeft) || this.tryAction(Action.PushLeft);
                     break;
                 case "right":
-                    direction = Direction.Right;
+                    this.tryAction(Action.WalkRight) || this.tryAction(Action.PushRight);
                     break;
                 case "up":
-                    direction = Direction.Up;
+                    this.tryAction(Action.WalkUp) || this.tryAction(Action.PushUp);
                     break;
                 case "down":
-                    direction = Direction.Down;
+                    this.tryAction(Action.WalkDown) || this.tryAction(Action.PushDown);
                     break;
-            }
-
-            if (direction !== null) {
-                const players = this.getPlayers();
-
-                for (const player of players) {
-                    player.tryWalk(direction);
-                }
+                case "undo":
+                    this.undo();
+                    break;
+                case "redo":
+                    this.redo();
+                    break;
             }
         }
 

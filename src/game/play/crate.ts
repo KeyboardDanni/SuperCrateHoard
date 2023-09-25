@@ -32,4 +32,31 @@ export class Crate extends BoardToken {
 
         return false;
     }
+
+    tryPull(puller: BoardToken, direction: Direction) {
+        const pos = this.getPosition();
+        const offset = directionToOffset(direction);
+        const newX = pos.x + offset.x;
+        const newY = pos.y + offset.y;
+
+        if (!this.isTileFree(newX, newY)) {
+            return false;
+        }
+
+        const tokens = this.board.tokensForTile(newX, newY);
+
+        for (const token of tokens) {
+            if (token.solid && token !== puller) {
+                return false;
+            }
+        }
+
+        this.board.moveToken(this, newX, newY);
+        this.setPosition(newX, newY);
+
+        const tile = this.board.tile(newX, newY);
+        this.slice = this.theme.crate[tile === BoardTileType.Dropzone ? 1 : 0];
+
+        return true;
+    }
 }

@@ -1,6 +1,11 @@
-import { BoardToken, Direction, directionToOffset } from "../board/token";
+import { BoardToken, Direction, directionToOffset, oppositeDirection } from "../board/token";
 import { Board } from "../board/board";
 import { Crate } from "./crate";
+
+export enum Orientation {
+    Forward,
+    Backward,
+}
 
 export class Player extends BoardToken {
     private theme;
@@ -15,8 +20,6 @@ export class Player extends BoardToken {
     }
 
     private walkAnimation(direction: Direction) {
-        this.walkFrame = (this.walkFrame + 1) % 4;
-
         switch (direction) {
             case Direction.Left:
                 this.slice = this.theme.playerLeft[this.walkFrame];
@@ -33,35 +36,82 @@ export class Player extends BoardToken {
         }
     }
 
-    private doWalk(direction: Direction, newX: number, newY: number) {
+    private doWalk(newX: number, newY: number, orientation: Orientation) {
         this.board.moveToken(this, newX, newY);
         this.setPosition(newX, newY);
 
-        this.walkAnimation(direction);
+        if (orientation === Orientation.Forward) {
+            this.walkFrame = (this.walkFrame + 1) % 4;
+        } else {
+            this.walkFrame = (this.walkFrame + 3) % 4;
+        }
     }
 
-    tryWalk(direction: Direction) {
+    tryWalk(direction: Direction, orientation: Orientation = Orientation.Forward) {
         const pos = this.getPosition();
         const offset = directionToOffset(direction);
         const newX = pos.x + offset.x;
         const newY = pos.y + offset.y;
+        let result = false;
+
+        if (this.isFree(newX, newY)) {
+            this.doWalk(newX, newY, orientation);
+            result = true;
+        }
+
+        this.walkAnimation(
+            orientation === Orientation.Forward ? direction : oppositeDirection(direction)
+        );
+        return result;
+    }
+
+    tryPush(direction: Direction) {
+        const pos = this.getPosition();
+        const offset = directionToOffset(direction);
+        const newX = pos.x + offset.x;
+        const newY = pos.y + offset.y;
+        let result = false;
 
         const tokens = this.board.tokensForTile(newX, newY);
-        let interactedWithToken = false;
 
         for (const token of tokens) {
             if (token instanceof Crate) {
                 if (token.tryPush(direction)) {
-                    this.doWalk(direction, newX, newY);
+                    this.doWalk(newX, newY, Orientation.Forward);
+                    result = true;
                 }
-
-                interactedWithToken = true;
                 break;
             }
         }
 
-        if (!interactedWithToken && this.isTileFree(newX, newY)) {
-            this.doWalk(direction, newX, newY);
+        this.walkAnimation(direction);
+        return result;
+    }
+
+    tryPull(direction: Direction) {
+        const pos = this.getPosition();
+        const offset = directionToOffset(direction);
+        const crateX = pos.x - offset.x;
+        const crateY = pos.y - offset.y;
+        const newX = pos.x + offset.x;
+        const newY = pos.y + offset.y;
+        let result = false;
+
+        const tokens = this.board.tokensForTile(crateX, crateY);
+
+        if (this.isFree(newX, newY)) {
+            for (const token of tokens) {
+                if (token instanceof Crate) {
+                    if (token.tryPull(this, direction)) {
+                        this.doWalk(newX, newY, Orientation.Backward);
+                        result = true;
+                    }
+                    break;
+                }
+            }
         }
+
+        this.walkAnimation(oppositeDirection(direction));
+        return result;
     }
 }

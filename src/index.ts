@@ -35,6 +35,8 @@ window.onload = function init() {
     input.addAction("down", ["ArrowDown", "KeyS"]);
     input.addAction("menu", ["Backspace", "Escape"]);
     input.addAction("accept", ["Enter", "Space"]);
+    input.addAction("undo", ["KeyZ"]);
+    input.addAction("redo", ["KeyX"]);
 
     gameloop.setScene(() => {
         return makeMenuScene(gameloop.input());
