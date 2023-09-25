@@ -73,6 +73,13 @@ export class BoardToken {
         this.y = y;
     }
 
+    getBoardPosition(): Position {
+        const x = this.x * this.board.tileWidth + this.board.x;
+        const y = this.y * this.board.tileHeight + this.board.y;
+
+        return { x: x, y: y };
+    }
+
     isTileFree(x: number, y: number) {
         const tileType = this.board.tile(x, y);
 

@@ -19,7 +19,11 @@ export class Player extends BoardToken {
         this.slice = this.theme.playerDown[0];
     }
 
-    private walkAnimation(direction: Direction) {
+    winAnimation() {
+        this.slice = this.theme.playerWin;
+    }
+
+    walkAnimation(direction: Direction) {
         switch (direction) {
             case Direction.Left:
                 this.slice = this.theme.playerLeft[this.walkFrame];

@@ -3,17 +3,20 @@ import { Picture } from "../../engine/graphics";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { centered } from "../../engine/util";
 import { GameSingleton } from "../singleton";
+import { makeMenuScene } from "../menu/menuscene";
 import { Focusable, FocusableScene } from "../global/focus";
-import { Board } from "../board/board";
+import { Board, BoardTileType } from "../board/board";
 import { BoardTokenType, Direction, TokenToSpawn } from "../board/token";
 import { Orientation, Player } from "./player";
 import { Crate } from "./crate";
 
 import * as gameAtlas32Json from "../../res/GameAtlas32.json";
+import { Confetti } from "./confetti";
 
 const game32Slices = gameAtlas32Json;
 
 const FOCUS_PRIORITY_PLAY = 0;
+const WIN_FRAMES = 300;
 
 enum Action {
     WalkLeft,
@@ -32,6 +35,8 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     private action: string | null = null;
     private history: Action[] = [];
     private redoHistory: Action[] = [];
+    private winTimer = 0;
+    private confetti: Confetti | null = null;
 
     constructor(gameloop: Gameloop<GameSingleton>, scene: FocusableScene) {
         super(scene);
@@ -81,17 +86,23 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     private tryWalk(direction: Direction, orientation: Orientation = Orientation.Forward) {
         const player = this.getPlayer();
 
+        if (!player) return false;
+
         return player.tryWalk(direction, orientation);
     }
 
     private tryPush(direction: Direction) {
         const player = this.getPlayer();
 
+        if (!player) return false;
+
         return player.tryPush(direction);
     }
 
     private tryPull(direction: Direction) {
         const player = this.getPlayer();
+
+        if (!player) return false;
 
         return player.tryPull(direction);
     }
@@ -191,17 +202,59 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         return false;
     }
 
-    focusTick(gameloop: Gameloop<GameSingleton>, scene: Scene): void {
-        const input = gameloop.input();
+    private checkWinCondition() {
+        for (let y = 0; y < this.board.height; ++y) {
+            for (let x = 0; x < this.board.width; ++x) {
+                const tile = this.board.tile(x, y);
 
-        if (input.justPressed("menu")) {
-            scene.pushEvent("openMenu");
+                if (tile !== BoardTileType.Dropzone) {
+                    continue;
+                }
+
+                const tokens = this.board.tokensForTile(x, y);
+                const crate = tokens.find((token) => token instanceof Crate);
+
+                if (!crate) {
+                    return;
+                }
+            }
         }
 
-        this.action = input.autoRepeatNewest(["left", "right", "up", "down", "undo", "redo"]);
+        if (this.winTimer <= 0) {
+            this.winTimer = 1;
+        }
     }
 
-    tick(_gameloop: Gameloop, _scene: Scene): void {
+    private gameWonTick(gameloop: Gameloop) {
+        const player = this.getPlayer();
+
+        if (player) {
+            player.winAnimation();
+        }
+
+        if (!this.confetti) {
+            const canvas = gameloop.renderer().canvas();
+
+            this.confetti = new Confetti(
+                canvas.width / 2,
+                canvas.height / 2,
+                this.board.picture,
+                this.board.slices
+            );
+        }
+
+        this.confetti.tick();
+
+        if (this.winTimer >= WIN_FRAMES) {
+            gameloop.setScene(() => {
+                return makeMenuScene(gameloop.input());
+            });
+        }
+
+        this.winTimer++;
+    }
+
+    private gameActiveTick() {
         if (this.action) {
             switch (this.action) {
                 case "left":
@@ -223,15 +276,44 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
                     this.redo();
                     break;
             }
+
+            this.checkWinCondition();
         }
 
         this.action = null;
+    }
+
+    focusTick(gameloop: Gameloop<GameSingleton>, scene: Scene): void {
+        if (this.winTimer > 0) {
+            return;
+        }
+
+        const input = gameloop.input();
+
+        this.action = input.autoRepeatNewest(["left", "right", "up", "down", "undo", "redo"]);
+
+        if (this.action === null && input.justPressed("menu")) {
+            scene.pushEvent("openMenu");
+        }
+    }
+
+    tick(gameloop: Gameloop, _scene: Scene): void {
+        if (this.winTimer <= 0) {
+            this.gameActiveTick();
+        } else {
+            this.gameWonTick(gameloop);
+        }
+
         this.keepActive(FOCUS_PRIORITY_PLAY);
     }
 
-    draw(gameloop: Gameloop, _scene: Scene, _lerpTime: number): void {
+    draw(gameloop: Gameloop, _scene: Scene, lerpTime: number): void {
         const renderer = gameloop.renderer();
 
         this.board.draw(renderer);
+
+        if (this.confetti) {
+            this.confetti.draw(renderer, lerpTime);
+        }
     }
 }

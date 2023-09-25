@@ -12,6 +12,7 @@ export interface LevelTheme {
     playerWin: PictureSlice;
     playerHead: PictureSlice;
     crate: PictureSlice[];
+    confetti: PictureSlice[];
 }
 
 export interface PictureSlicePair {

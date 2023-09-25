@@ -12,14 +12,18 @@ export function clamp(value: number, low: number, high: number) {
     return Math.max(Math.min(value, high), low);
 }
 
-export function lerp(a: number, b: number, ratio: number) {
+export function distance(deltaX: number, deltaY: number) {
+    return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+}
+
+export function lerp(start: number, end: number, ratio: number) {
     if (ratio <= 0) {
-        return a;
+        return start;
     } else if (ratio >= 1) {
-        return b;
+        return end;
     }
 
-    return a + ratio * (b - a);
+    return start + ratio * (end - start);
 }
 
 export function centered(inner: number, outer: number) {
