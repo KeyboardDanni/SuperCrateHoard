@@ -141,7 +141,18 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     private tryAction(action: Action): boolean {
         if (this.doAction(action)) {
             this.history.push(action);
-            this.redoHistory = [];
+
+            if (
+                this.redoHistory.length > 0 &&
+                this.redoHistory[this.redoHistory.length - 1] === action
+            ) {
+                // Try to preserve redo history if the new action is the same as what would have
+                //  been redone.
+                this.redoHistory.pop();
+            } else {
+                this.redoHistory = [];
+            }
+
             return true;
         }
 
