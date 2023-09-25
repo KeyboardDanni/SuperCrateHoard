@@ -1,10 +1,6 @@
+import { Position } from "../../engine/util";
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 import { Board, BoardTileType } from "./board";
-
-export interface Position {
-    x: number;
-    y: number;
-}
 
 export enum Direction {
     Left,

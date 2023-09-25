@@ -1,7 +1,8 @@
-import { LevelTheme } from "../global/theme";
+import { Position } from "../../engine/util";
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 import { Level } from "../global/level";
-import { BoardToken, BoardTokenType, Position, TokenToSpawn } from "./token";
+import { LevelTheme } from "../global/theme";
+import { BoardToken, BoardTokenType, TokenToSpawn } from "./token";
 
 export enum BoardTileType {
     None,

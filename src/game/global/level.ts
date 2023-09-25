@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { Point } from "../../engine/util";
+import { Position } from "../../engine/util";
 
 export class Level {
     name: string | null = null;
@@ -7,7 +7,7 @@ export class Level {
     description: string | null = null;
     tiles: string[] = [];
 
-    measureDimensions() {
+    measureDimensions(): Position {
         let width = 0;
         const height = this.tiles.length;
 
@@ -15,7 +15,7 @@ export class Level {
             width = Math.max(width, row.length);
         }
 
-        return new Point(width, height);
+        return { x: width, y: height };
     }
 }
 
