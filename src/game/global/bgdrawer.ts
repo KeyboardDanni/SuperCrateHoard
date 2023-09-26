@@ -3,6 +3,7 @@ import { Gameloop } from "../../engine/gameloop";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { lerp } from "../../engine/util";
 import * as gameAtlasJson from "../../res/GameAtlas32.json";
+import { GameSingleton } from "~game/singleton";
 
 const slices = gameAtlasJson;
 
@@ -14,7 +15,6 @@ const OFFSET_CRATE_SQUARE = 2;
 export class BgDrawer implements TickLogic, DrawLogic {
     private image;
     private canvas: OffscreenCanvas | null = null;
-    private scroll = 0;
     scrollSpeed: number;
 
     constructor(scrollSpeed: number) {
@@ -75,21 +75,24 @@ export class BgDrawer implements TickLogic, DrawLogic {
         this.canvas = canvas;
     }
 
-    tick(_gameloop: Gameloop, _scene: Scene) {
-        this.scroll += this.scrollSpeed;
+    tick(gameloop: Gameloop<GameSingleton>, _scene: Scene) {
+        const singleton = gameloop.singleton;
+
+        singleton.bgScroll += this.scrollSpeed;
     }
 
-    draw(gameloop: Gameloop, _scene: Scene, lerpTime: number) {
+    draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, lerpTime: number) {
         this.createCanvas();
 
         if (!this.canvas) return;
 
+        const singleton = gameloop.singleton;
         const renderer = gameloop.renderer();
         const [width, height] = [renderer.canvas().width, renderer.canvas().height];
         const gridWidth = Math.ceil(width / this.canvas.width) + 1;
         const gridHeight = Math.ceil(height / this.canvas.height) + 1;
         const context = renderer.context();
-        const scroll = lerp(this.scroll - this.scrollSpeed, this.scroll, lerpTime);
+        const scroll = lerp(singleton.bgScroll - this.scrollSpeed, singleton.bgScroll, lerpTime);
         const scrollWrapped = scroll % this.canvas.height;
 
         for (let y = 0; y < gridHeight; ++y) {
