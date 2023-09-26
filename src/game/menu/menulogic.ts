@@ -246,13 +246,16 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             collection.levels.length - LEVEL_LIST_COUNT
         );
 
+        const finishedLevels = singleton.getFinishedLevels();
+
         for (let i = offset; i < offset + LEVEL_LIST_COUNT; ++i) {
             this.drawLevelItem(
                 renderer,
                 i,
                 cursor,
                 i === singleton.currentLevel,
-                collection.levels[i]
+                collection.levels[i],
+                finishedLevels[i] > 0
             );
 
             cursor += LEVEL_LIST_SPACING;
@@ -264,7 +267,8 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
         index: number,
         cursor: number,
         isSelected: boolean,
-        level: Level
+        level: Level,
+        finished: boolean
     ) {
         if (!level) {
             return;
@@ -278,6 +282,8 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
 
         const textWidth = this.font.measureText(label);
         const scale = clamp(LEVEL_LIST_TEXT_WIDTH / textWidth, 0.5, 1.0);
+        let font = this.font;
+        let star = titleSlices.starWhite;
 
         if (isSelected) {
             renderer.drawRect(
@@ -287,23 +293,16 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
                 LEVEL_LIST_SPACING,
                 "rgb(255, 255, 255, 1.0"
             );
-            renderer.context().save();
-            renderer.context().scale(scale, 1.0);
-            this.outlineFont.drawText(
-                renderer,
-                label,
-                104 / scale,
-                cursor,
-                LEVEL_LIST_TEXT_WIDTH * 2,
-                1
-            );
-            renderer.context().restore();
-        } else {
-            renderer.context().save();
-            renderer.context().scale(scale, 1.0);
-            this.font.drawText(renderer, label, 104 / scale, cursor, LEVEL_LIST_TEXT_WIDTH * 2, 1);
-            renderer.context().restore();
+            font = this.outlineFont;
+            star = titleSlices.starBlack;
         }
+
+        renderer.drawSprite(this.picture, star[finished ? 1 : 0], 80, cursor);
+
+        renderer.context().save();
+        renderer.context().scale(scale, 1.0);
+        font.drawText(renderer, label, 104 / scale, cursor, LEVEL_LIST_TEXT_WIDTH * 2, 1);
+        renderer.context().restore();
     }
 
     private drawPreviewBoard(renderer: Renderer) {

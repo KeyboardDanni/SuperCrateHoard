@@ -204,7 +204,14 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         return false;
     }
 
-    private checkWinCondition() {
+    private saveWin(gameloop: Gameloop<GameSingleton>) {
+        const singleton = gameloop.singleton;
+
+        singleton.markLevelFinished();
+        singleton.saveData.toLocalStorage();
+    }
+
+    private checkWinCondition(gameloop: Gameloop<GameSingleton>) {
         for (let y = 0; y < this.board.height; ++y) {
             for (let x = 0; x < this.board.width; ++x) {
                 const tile = this.board.tile(x, y);
@@ -224,6 +231,8 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
         if (this.winTimer <= 0) {
             this.winTimer = 1;
+
+            this.saveWin(gameloop);
         }
     }
 
@@ -286,7 +295,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         this.winTimer++;
     }
 
-    private gameActiveTick() {
+    private gameActiveTick(gameloop: Gameloop<GameSingleton>) {
         if (this.action) {
             switch (this.action) {
                 case "left":
@@ -309,7 +318,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
                     break;
             }
 
-            this.checkWinCondition();
+            this.checkWinCondition(gameloop);
         }
 
         this.action = null;
@@ -331,7 +340,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
     tick(gameloop: Gameloop<GameSingleton>, _scene: Scene): void {
         if (this.winTimer <= 0) {
-            this.gameActiveTick();
+            this.gameActiveTick(gameloop);
         } else {
             this.gameWonTick(gameloop);
         }

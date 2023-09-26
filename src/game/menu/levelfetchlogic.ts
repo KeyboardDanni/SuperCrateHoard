@@ -32,10 +32,25 @@ export class LevelFetchLogic implements TickLogic, DrawLogic {
         const levels = (await fetchAndReadJson("./res/levels.json")) as LevelsList;
 
         const promises: Promise<LevelCollection>[] = [];
+        const saveIds: { [id: string]: string } = {};
 
         for (const path of levels.levelFiles) {
             const promise = fetchAndReadJson(path).then((levelsAny) => {
                 const collection = plainToClass(LevelCollection, levelsAny);
+
+                if (collection.saveId.length <= 0) {
+                    throw new Error(`Empty collection save id for "${collection.name}"`);
+                }
+
+                if (saveIds[collection.saveId] !== undefined) {
+                    throw new Error(
+                        `Collection save id "${collection.saveId}" collision between "${
+                            collection.name
+                        }" and "${saveIds[collection.saveId]}"`
+                    );
+                }
+
+                saveIds[collection.saveId] = collection.name;
 
                 return Promise.resolve(collection);
             });

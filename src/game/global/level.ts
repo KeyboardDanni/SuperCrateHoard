@@ -23,6 +23,7 @@ export class LevelCollection {
     name: string = "Unnamed Collection";
     author: string = "";
     description: string = "";
+    saveId: string = "";
     @Type(() => Level)
     levels: Level[] = [];
 }
