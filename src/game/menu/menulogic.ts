@@ -23,19 +23,23 @@ const game16Slices = gameAtlas16Json;
 const game24Slices = gameAtlas24Json;
 const game32Slices = gameAtlas32Json;
 
-const PREVIEW_RECT_X = 468;
-const PREVIEW_RECT_W = 500;
+const TEXT_LEFT_ALIGN_UPPER = 80;
+const TEXT_LEFT_ALIGN = 64;
+
+const PREVIEW_RECT_X = 452;
+const PREVIEW_RECT_W = 492;
 const PREVIEW_RECT_Y = 308;
 const PREVIEW_RECT_H = 332;
-const PREVIEW_CENTER_X = 714;
-const PREVIEW_CENTER_Y = 474;
+const PREVIEW_CENTER_X = PREVIEW_RECT_X + PREVIEW_RECT_W / 2;
+const PREVIEW_CENTER_Y = PREVIEW_RECT_Y + PREVIEW_RECT_H / 2;
 
 const LEVEL_LIST_Y = PREVIEW_RECT_Y + 12;
 const LEVEL_LIST_SPACING = 24;
 const LEVEL_LIST_SELECTION_OFFSET = 6;
 const LEVEL_LIST_COUNT = 10;
 const LEVEL_LIST_SCROLL_OFFSET = 4;
-const LEVEL_LIST_TEXT_WIDTH = PREVIEW_RECT_X - 160;
+const LEVEL_LIST_STAR_SPACING = 28;
+const LEVEL_LIST_TEXT_WIDTH = PREVIEW_RECT_X - TEXT_LEFT_ALIGN - 80;
 
 const SIZE_200_MAX_WIDTH = 12;
 const SIZE_200_MAX_HEIGHT = 8;
@@ -207,18 +211,42 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
         context.save();
         context.scale(2, 2);
 
-        this.font.drawText(renderer, `Levelset   ${name}`, 40, 100);
+        this.font.drawText(renderer, `Levelset   ${name}`, TEXT_LEFT_ALIGN_UPPER / 2, 96);
 
         context.restore();
 
         const bob = Math.sin(this.ticks * 0.1) * 3;
 
-        renderer.drawSprite(this.picture, titleSlices.arrowLeft, 286 - bob, 202);
-        renderer.drawSprite(this.picture, titleSlices.arrowRight, 310 + bob, 202);
+        renderer.drawSprite(
+            this.picture,
+            titleSlices.arrowLeft,
+            TEXT_LEFT_ALIGN_UPPER + 206 - bob,
+            198
+        );
+        renderer.drawSprite(
+            this.picture,
+            titleSlices.arrowRight,
+            TEXT_LEFT_ALIGN_UPPER + 230 + bob,
+            198
+        );
 
         if (collection) {
-            this.font.drawText(renderer, `by ${author}`, 80, 238, width - 140, 1);
-            this.font.drawText(renderer, collection.description, 80, 266, width - 140, 2);
+            this.font.drawText(
+                renderer,
+                `by ${author}`,
+                TEXT_LEFT_ALIGN_UPPER,
+                234,
+                width - TEXT_LEFT_ALIGN_UPPER * 2,
+                1
+            );
+            this.font.drawText(
+                renderer,
+                collection.description,
+                TEXT_LEFT_ALIGN_UPPER,
+                262,
+                width - TEXT_LEFT_ALIGN_UPPER * 2,
+                2
+            );
         }
     }
 
@@ -231,11 +259,16 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
 
         const bob = Math.sin(this.ticks * 0.1) * 3;
 
-        renderer.drawSprite(this.picture, titleSlices.arrowUp, 132, LEVEL_LIST_Y - bob - 2);
+        renderer.drawSprite(
+            this.picture,
+            titleSlices.arrowUp,
+            TEXT_LEFT_ALIGN + 52,
+            LEVEL_LIST_Y - bob - 2
+        );
         renderer.drawSprite(
             this.picture,
             titleSlices.arrowDown,
-            132,
+            TEXT_LEFT_ALIGN + 52,
             LEVEL_LIST_Y + LEVEL_LIST_SPACING * (LEVEL_LIST_COUNT + 1) + bob + 2
         );
 
@@ -287,9 +320,9 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
 
         if (isSelected) {
             renderer.drawRect(
-                80 - LEVEL_LIST_SELECTION_OFFSET,
+                TEXT_LEFT_ALIGN - LEVEL_LIST_SELECTION_OFFSET,
                 cursor - LEVEL_LIST_SELECTION_OFFSET,
-                PREVIEW_RECT_X - 120,
+                LEVEL_LIST_TEXT_WIDTH + LEVEL_LIST_SELECTION_OFFSET * 2 + LEVEL_LIST_STAR_SPACING,
                 LEVEL_LIST_SPACING,
                 "rgb(255, 255, 255, 1.0"
             );
@@ -297,11 +330,18 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             star = titleSlices.starBlack;
         }
 
-        renderer.drawSprite(this.picture, star[finished ? 1 : 0], 80, cursor);
+        renderer.drawSprite(this.picture, star[finished ? 1 : 0], TEXT_LEFT_ALIGN, cursor);
 
         renderer.context().save();
         renderer.context().scale(scale, 1.0);
-        font.drawText(renderer, label, 104 / scale, cursor, LEVEL_LIST_TEXT_WIDTH * 2, 1);
+        font.drawText(
+            renderer,
+            label,
+            (TEXT_LEFT_ALIGN + LEVEL_LIST_STAR_SPACING) / scale,
+            cursor,
+            LEVEL_LIST_TEXT_WIDTH * 2,
+            1
+        );
         renderer.context().restore();
     }
 
@@ -320,8 +360,8 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
         renderer.drawRectOutline(
             PREVIEW_RECT_X + 0.5,
             PREVIEW_RECT_Y + 0.5,
-            PREVIEW_RECT_W,
-            PREVIEW_RECT_H,
+            PREVIEW_RECT_W - 1,
+            PREVIEW_RECT_H - 1,
             "rgb(0, 0, 0, 0.15)"
         );
 
@@ -338,10 +378,10 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
 
         if (this.ticks % 480 < 240) {
             ticker = "Press Enter to play";
-            offset = 120;
+            offset = TEXT_LEFT_ALIGN + 40;
         } else {
             ticker = "Press Backspace to open menu";
-            offset = 80;
+            offset = TEXT_LEFT_ALIGN;
         }
 
         this.font.drawText(renderer, ticker, offset, renderer.canvas().height - 24);
