@@ -2,9 +2,9 @@ import { distance, lerp } from "../../engine/util";
 import { Picture, Renderer } from "../../engine/graphics";
 import { LevelTheme } from "../global/theme";
 
-const NUM_PARTICLES = 500;
-const PARTICLE_VELOCITY = 48;
-const PARTICLE_UPWARD_VELOCITY = 16;
+const NUM_PARTICLES = 200;
+const PARTICLE_VELOCITY = 28;
+const PARTICLE_UPWARD_VELOCITY = 8;
 const PARTICLE_GRAVITY = 0.125;
 const PARTICLE_ANIMATION_SPEED_BASE = 0.25;
 const PARTICLE_ANIMATION_SPEED = 0.75;

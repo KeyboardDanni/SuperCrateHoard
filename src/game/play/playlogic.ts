@@ -12,11 +12,13 @@ import { Crate } from "./crate";
 
 import * as gameAtlas32Json from "../../res/GameAtlas32.json";
 import { Confetti } from "./confetti";
+import { makePlayScene } from "./playscene";
 
 const game32Slices = gameAtlas32Json;
 
 const FOCUS_PRIORITY_PLAY = 0;
 const WIN_FRAMES = 300;
+const WIN_FRAMES_SKIP = 40;
 
 enum Action {
     WalkLeft,
@@ -225,7 +227,36 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         }
     }
 
-    private gameWonTick(gameloop: Gameloop) {
+    private goToNextLevel(gameloop: Gameloop<GameSingleton>) {
+        const singleton = gameloop.singleton;
+
+        const collection = singleton.levels[singleton.currentCollection];
+
+        if (!collection) {
+            return false;
+        }
+
+        if (!collection.levels[singleton.currentLevel + 1]) {
+            return false;
+        }
+
+        singleton.currentLevel++;
+
+        gameloop.setScene(() => {
+            return makePlayScene(gameloop);
+        });
+
+        return true;
+    }
+
+    private goToMenu(gameloop: Gameloop) {
+        gameloop.setScene(() => {
+            return makeMenuScene(gameloop.input());
+        });
+    }
+
+    private gameWonTick(gameloop: Gameloop<GameSingleton>) {
+        const input = gameloop.input();
         const player = this.getPlayer();
 
         if (player) {
@@ -245,10 +276,11 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
         this.confetti.tick();
 
-        if (this.winTimer >= WIN_FRAMES) {
-            gameloop.setScene(() => {
-                return makeMenuScene(gameloop.input());
-            });
+        if (
+            this.winTimer >= WIN_FRAMES ||
+            (input.justPressed("accept") && this.winTimer >= WIN_FRAMES_SKIP)
+        ) {
+            this.goToNextLevel(gameloop) || this.goToMenu(gameloop);
         }
 
         this.winTimer++;
@@ -297,7 +329,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         }
     }
 
-    tick(gameloop: Gameloop, _scene: Scene): void {
+    tick(gameloop: Gameloop<GameSingleton>, _scene: Scene): void {
         if (this.winTimer <= 0) {
             this.gameActiveTick();
         } else {
