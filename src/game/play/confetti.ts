@@ -2,9 +2,10 @@ import { distance, lerp } from "../../engine/util";
 import { Picture, Renderer } from "../../engine/graphics";
 import { LevelTheme } from "../global/theme";
 
-const NUM_PARTICLES = 200;
+const NUM_PARTICLES = 100;
+const PARTICLE_VELOCITY_BASE = 4;
 const PARTICLE_VELOCITY = 28;
-const PARTICLE_UPWARD_VELOCITY = 8;
+const PARTICLE_UPWARD_VELOCITY = 2;
 const PARTICLE_GRAVITY = 0.125;
 const PARTICLE_ANIMATION_SPEED_BASE = 0.25;
 const PARTICLE_ANIMATION_SPEED = 0.75;
@@ -22,17 +23,17 @@ class Particle {
     frame: number;
     frameSpeed: number;
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, angleBase: number, angleSpread: number) {
         this.x = x;
         this.y = y;
         this.oldX = x;
         this.oldY = y;
 
-        const angle = Math.random() * 2 * Math.PI;
-        const vel = Math.random() * PARTICLE_VELOCITY;
+        const angle = angleBase + Math.random() * angleSpread;
+        const vel = Math.random() * PARTICLE_VELOCITY + PARTICLE_VELOCITY_BASE;
 
         this.velX = Math.cos(angle) * vel;
-        this.velY = Math.sin(angle) * vel - PARTICLE_UPWARD_VELOCITY;
+        this.velY = -Math.sin(angle) * vel - PARTICLE_UPWARD_VELOCITY;
 
         this.frame = Math.random() * 5;
         this.frameSpeed = Math.random() * PARTICLE_ANIMATION_SPEED + PARTICLE_ANIMATION_SPEED_BASE;
@@ -54,7 +55,7 @@ class Particle {
             const vel = Math.random() * PARTICLE_JITTER;
 
             this.velX += Math.cos(angle) * vel;
-            this.velY += Math.sin(angle) * vel;
+            this.velY += -Math.sin(angle) * vel;
         }
 
         this.frame = (this.frame + this.frameSpeed) % 5;
@@ -66,15 +67,16 @@ export class Confetti {
     private theme: LevelTheme;
     private particles: Particle[];
 
-    constructor(x: number, y: number, picture: Picture, theme: LevelTheme) {
+    constructor(screenWidth: number, screenHeight: number, picture: Picture, theme: LevelTheme) {
         this.picture = picture;
         this.theme = theme;
         this.particles = [];
 
         for (let i = 0; i < NUM_PARTICLES; ++i) {
-            const particle = new Particle(x, y);
-
-            this.particles.push(particle);
+            this.particles.push(new Particle(0, screenHeight, Math.PI / 8, Math.PI / 2));
+            this.particles.push(
+                new Particle(screenWidth, screenHeight, (Math.PI * 3) / 8, Math.PI / 2)
+            );
         }
     }
 

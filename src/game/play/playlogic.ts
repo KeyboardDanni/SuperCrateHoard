@@ -267,8 +267,8 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
             const canvas = gameloop.renderer().canvas();
 
             this.confetti = new Confetti(
-                canvas.width / 2,
-                canvas.height / 2,
+                canvas.width,
+                canvas.height,
                 this.board.picture,
                 this.board.slices
             );
