@@ -66,4 +66,8 @@ export abstract class Focusable {
     focusedInput() {
         return this.scene.focusedInput(this);
     }
+
+    getScene() {
+        return this.scene;
+    }
 }

@@ -5,10 +5,12 @@ import { OptionsLogic } from "../global/optionslogic";
 import { PlayLogic } from "./playlogic";
 import { GameSingleton } from "~game/singleton";
 
+export class PlayScene extends FocusableScene {}
+
 export function makePlayScene(gameloop: Gameloop<GameSingleton>) {
     const bgDrawer = new BgDrawer(0.125);
 
-    const scene = new FocusableScene(gameloop.input());
+    const scene = new PlayScene(gameloop.input());
 
     const playLogic = new PlayLogic(gameloop, scene);
     const optionsLogic = new OptionsLogic(scene);

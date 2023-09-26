@@ -4,6 +4,7 @@ import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { BMFont } from "../../engine/text";
 import { centered } from "../../engine/util";
 import { GameSingleton } from "../../game/singleton";
+import { PlayScene, makePlayScene } from "../play/playscene";
 import { makeMenuScene } from "../../game/menu/menuscene";
 import { Focusable, FocusableScene } from "./focus";
 
@@ -41,7 +42,7 @@ interface ButtonItem extends LabelItem {
 
 const OPTIONS_MENU_ITEMS: Menu = {
     width: 640,
-    height: 224,
+    height: 256,
     buttons: [
         {
             x: 0,
@@ -57,6 +58,19 @@ const OPTIONS_MENU_ITEMS: Menu = {
         {
             x: 0,
             y: 192,
+            text: (logic) => (logic.isIngame() ? "Restart" : "Play Level"),
+            alignment: TextAlignment.Center,
+            maxWidth: -1,
+            maxLines: 1,
+            onActivate: (_logic, gameloop) => {
+                gameloop.setScene(() => {
+                    return makePlayScene(gameloop);
+                });
+            },
+        },
+        {
+            x: 0,
+            y: 224,
             text: () => "Main Menu",
             alignment: TextAlignment.Center,
             maxWidth: -1,
@@ -176,6 +190,10 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
 
     close() {
         this.isOpen = false;
+    }
+
+    isIngame() {
+        return this.getScene() instanceof PlayScene;
     }
 
     focusTick(gameloop: Gameloop<GameSingleton>, _scene: Scene): void {
