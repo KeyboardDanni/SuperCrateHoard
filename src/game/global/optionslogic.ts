@@ -4,9 +4,9 @@ import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { BMFont } from "../../engine/text";
 import { centered } from "../../engine/util";
 import { GameSingleton } from "../../game/singleton";
-import { PlayScene, makePlayScene } from "../play/playscene";
-import { makeMenuScene } from "../../game/menu/menuscene";
+import { PlayScene } from "../play/playscene";
 import { Focusable, FocusableScene } from "./focus";
+import { OPTIONS_MAIN } from "./optionsmenus";
 
 import * as titleAtlasJson from "../../res/TitleAtlas.json";
 import * as fontDescriptor from "../../res/Pixel12x10.json";
@@ -15,16 +15,21 @@ const titleSlices = titleAtlasJson;
 
 const FOCUS_PRIORITY_OPTIONS_MENU = 100;
 
-enum TextAlignment {
+export const enum TextAlignment {
     Left,
     Center,
 }
 
-interface Menu {
+export interface Menu {
     width: number;
     height: number;
     buttons: ButtonItem[];
     labels: LabelItem[];
+}
+
+interface MenuHistoryEntry {
+    menu: Menu;
+    index: number;
 }
 
 interface LabelItem {
@@ -38,139 +43,16 @@ interface LabelItem {
 
 interface ButtonItem extends LabelItem {
     onActivate: (logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => void;
+    onAdjust: (offset: number, logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => void;
 }
-
-const OPTIONS_MENU_ITEMS: Menu = {
-    width: 640,
-    height: 256,
-    buttons: [
-        {
-            x: 0,
-            y: 160,
-            text: () => "Continue",
-            alignment: TextAlignment.Center,
-            maxWidth: -1,
-            maxLines: 1,
-            onActivate: (logic) => {
-                logic.close();
-            },
-        },
-        {
-            x: 0,
-            y: 192,
-            text: (logic) => (logic.isIngame() ? "Restart" : "Play Level"),
-            alignment: TextAlignment.Center,
-            maxWidth: -1,
-            maxLines: 1,
-            onActivate: (_logic, gameloop) => {
-                gameloop.setScene(() => {
-                    return makePlayScene(gameloop);
-                });
-            },
-        },
-        {
-            x: 0,
-            y: 224,
-            text: () => "Main Menu",
-            alignment: TextAlignment.Center,
-            maxWidth: -1,
-            maxLines: 1,
-            onActivate: (_logic, gameloop) => {
-                gameloop.setScene(() => {
-                    return makeMenuScene(gameloop.input());
-                });
-            },
-        },
-    ],
-    labels: [
-        {
-            x: 0,
-            y: 16,
-            alignment: TextAlignment.Center,
-            maxWidth: -1,
-            maxLines: 1,
-            text: (_logic, gameloop) => {
-                const singleton = gameloop.singleton;
-
-                const collection = singleton.levels[singleton.currentCollection];
-
-                if (!collection) {
-                    return "";
-                }
-
-                return `Levelset: ${collection.name}`;
-            },
-        },
-        {
-            x: 16,
-            y: 48,
-            alignment: TextAlignment.Left,
-            maxWidth: 608,
-            maxLines: 1,
-            text: (_logic, gameloop) => {
-                const singleton = gameloop.singleton;
-
-                const collection = singleton.levels[singleton.currentCollection];
-
-                if (!collection) {
-                    return "";
-                }
-
-                const level = collection.levels[singleton.currentLevel];
-                let name = `Level ${singleton.currentLevel + 1}`;
-
-                if (!level) {
-                    return "";
-                }
-
-                if (level.name && level.name.length > 0) {
-                    name += `: ${level.name}`;
-                }
-
-                return name;
-            },
-        },
-        {
-            x: 16,
-            y: 80,
-            alignment: TextAlignment.Left,
-            maxWidth: 608,
-            maxLines: 2,
-            text: (_logic, gameloop) => {
-                const singleton = gameloop.singleton;
-
-                const collection = singleton.levels[singleton.currentCollection];
-
-                if (!collection) {
-                    return "";
-                }
-
-                const level = collection.levels[singleton.currentLevel];
-
-                if (!level) {
-                    return "";
-                }
-
-                let author = "Anonymous";
-
-                if (level.author && level.author.length > 0) {
-                    author = level.author;
-                } else if (collection.author.length > 0) {
-                    author = collection.author;
-                }
-
-                return `by ${author}`;
-            },
-        },
-    ],
-};
 
 export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
     private picture = new Picture("res/TitleAtlas.png");
     private font: BMFont;
     private isOpen = false;
     private cursorIndex = 0;
-    private currentMenu = OPTIONS_MENU_ITEMS;
+    private currentMenu = OPTIONS_MAIN;
+    private menuStack: MenuHistoryEntry[] = [];
 
     constructor(scene: FocusableScene) {
         super(scene);
@@ -184,12 +66,33 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
 
     open() {
         this.isOpen = true;
-        this.currentMenu = OPTIONS_MENU_ITEMS;
+        this.currentMenu = OPTIONS_MAIN;
+        this.menuStack = [];
         this.cursorIndex = 0;
     }
 
     close() {
         this.isOpen = false;
+    }
+
+    back() {
+        const history = this.menuStack.pop();
+
+        if (history !== undefined) {
+            this.currentMenu = history.menu;
+            this.cursorIndex = history.index;
+        } else {
+            this.close();
+        }
+    }
+
+    enterMenu(menu: Menu) {
+        this.menuStack.push({
+            menu: this.currentMenu,
+            index: this.cursorIndex,
+        });
+        this.currentMenu = menu;
+        this.cursorIndex = 0;
     }
 
     isIngame() {
@@ -200,11 +103,12 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
         const input = gameloop.input();
 
         if (gameloop.input().justPressed("menu")) {
-            this.close();
+            this.back();
             return;
         }
 
         const action = input.autoRepeatNewest(["left", "right", "up", "down"]);
+        const item = this.currentMenu.buttons[this.cursorIndex];
 
         switch (action) {
             case "up":
@@ -213,15 +117,25 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
             case "down":
                 this.cursorIndex++;
                 break;
+            case "left":
+                if (item) {
+                    item.onAdjust(-1, this, gameloop);
+                }
+                break;
+            case "right":
+                if (item) {
+                    item.onAdjust(1, this, gameloop);
+                }
+                break;
         }
 
         this.cursorIndex =
             (this.cursorIndex + this.currentMenu.buttons.length) % this.currentMenu.buttons.length;
 
         if (input.justPressed("accept")) {
-            const item = this.currentMenu.buttons[this.cursorIndex];
-
-            item.onActivate(this, gameloop);
+            if (item) {
+                item.onActivate(this, gameloop);
+            }
         }
     }
 

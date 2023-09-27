@@ -1,8 +1,9 @@
 import { LevelCollection } from "./global/level";
-import { SaveData } from "./global/savedata";
+import { Preferences, SaveData } from "./global/savedata";
 
 export class GameSingleton {
     saveData: SaveData = SaveData.fromLocalStorage();
+    preferences: Preferences = Preferences.fromLocalStorage();
     levels: LevelCollection[] = [];
     currentCollection: number = 0;
     currentLevel: number = 0;

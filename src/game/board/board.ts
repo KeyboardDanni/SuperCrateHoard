@@ -3,6 +3,7 @@ import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 import { Level } from "../global/level";
 import { LevelTheme } from "../global/theme";
 import { BoardToken, BoardTokenType, TokenToSpawn } from "./token";
+import { BoardAnalysis } from "./analysis";
 
 export enum BoardTileType {
     None,
@@ -26,6 +27,7 @@ export class Board {
     private tokens: BoardToken[] = [];
     private tokenPositions: Map<BoardToken, Position> = new Map();
     private tileTokens: BoardToken[][];
+    private analysis;
 
     constructor(width: number, height: number, picture: Picture, slices: LevelTheme) {
         this.width = width;
@@ -39,6 +41,7 @@ export class Board {
         this.tileWidth = slices.wall[0].w;
         this.tileHeight = slices.wall[0].h;
         this.tileTokens = new Array(width * height);
+        this.analysis = new BoardAnalysis(this);
 
         for (let i = 0; i < width * height; ++i) {
             this.tileTokens[i] = [];
@@ -167,21 +170,24 @@ export class Board {
 
     private updateDisplayTiles() {
         this.dirty = false;
+
+        const showRestricted = this.analysis.shouldShowRestricted();
         let i = 0;
 
         for (let y = 0; y < this.height; ++y) {
             for (let x = 0; x < this.width; ++x) {
                 const tile = this.tile(x, y);
+                const restricted = showRestricted && this.analysis.isRestricted(x, y);
 
                 switch (tile) {
                     case BoardTileType.None:
                         this.displayTiles[i] = null;
                         break;
                     case BoardTileType.Floor:
-                        this.displayTiles[i] = this.slices.floor[0];
+                        this.displayTiles[i] = this.slices.floor[restricted ? 1 : 0];
                         break;
                     case BoardTileType.Dropzone:
-                        this.displayTiles[i] = this.slices.dropzone[0];
+                        this.displayTiles[i] = this.slices.dropzone[restricted ? 1 : 0];
                         break;
                     case BoardTileType.Wall: {
                         const index = this.neighborBits(x, y);
@@ -287,6 +293,14 @@ export class Board {
 
         this.tiles[this.posToIndex(x, y)] = tile;
         this.dirty = true;
+    }
+
+    setDirty() {
+        this.dirty = true;
+    }
+
+    getAnalysis() {
+        return this.analysis;
     }
 
     draw(renderer: Renderer) {

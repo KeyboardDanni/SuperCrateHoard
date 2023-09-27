@@ -1,18 +1,21 @@
 import { plainToClass } from "class-transformer";
+import { AnalysisActionMode, AnalysisMode } from "../../game/board/analysis";
 
-const SAVE_DATA_VERSION = 1;
-const LOCAL_STORAGE_NAME = "SuperCrateHoard_SaveData";
+const VERSION_SAVEDATA = 1;
+const VERSION_PREFERENCES = 1;
+const STORAGE_NAME_SAVEDATA = "SuperCrateHoard_SaveData";
+const STORAGE_NAME_PREFERENCES = "SuperCrateHoard_Preferences";
 
 export class SaveData {
     version: number;
     finishedLevels: { [id: string]: number[] } = {};
 
     constructor() {
-        this.version = SAVE_DATA_VERSION;
+        this.version = VERSION_SAVEDATA;
     }
 
     static fromLocalStorage(): SaveData {
-        const json = window.localStorage.getItem(LOCAL_STORAGE_NAME);
+        const json = window.localStorage.getItem(STORAGE_NAME_SAVEDATA);
 
         if (!json) {
             return new SaveData();
@@ -25,7 +28,7 @@ export class SaveData {
     }
 
     toLocalStorage() {
-        window.localStorage.setItem(LOCAL_STORAGE_NAME, JSON.stringify(this));
+        window.localStorage.setItem(STORAGE_NAME_SAVEDATA, JSON.stringify(this));
     }
 
     getFinishedLevels(saveId: string) {
@@ -50,5 +53,34 @@ export class SaveData {
         }
 
         finished[index] = 1;
+    }
+}
+
+export class Preferences {
+    version: number;
+    analysis: AnalysisMode;
+    analysisAction: AnalysisActionMode;
+
+    constructor() {
+        this.version = VERSION_PREFERENCES;
+        this.analysis = AnalysisMode.None;
+        this.analysisAction = AnalysisActionMode.Show;
+    }
+
+    static fromLocalStorage(): Preferences {
+        const json = window.localStorage.getItem(STORAGE_NAME_PREFERENCES);
+
+        if (!json) {
+            return new Preferences();
+        }
+
+        const parsed = JSON.parse(json);
+        const data = plainToClass(Preferences, parsed);
+
+        return data;
+    }
+
+    toLocalStorage() {
+        window.localStorage.setItem(STORAGE_NAME_PREFERENCES, JSON.stringify(this));
     }
 }

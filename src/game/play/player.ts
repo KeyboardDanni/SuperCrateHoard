@@ -1,6 +1,6 @@
 import { BoardToken, Direction, directionToOffset, oppositeDirection } from "../board/token";
 import { Board } from "../board/board";
-import { Crate } from "./crate";
+import { Crate, PushPullResult } from "./crate";
 
 export enum Orientation {
     Forward,
@@ -19,10 +19,6 @@ export class Player extends BoardToken {
         this.slice = this.theme.playerDown[0];
     }
 
-    winAnimation() {
-        this.slice = this.theme.playerWin;
-    }
-
     walkAnimation(direction: Direction) {
         switch (direction) {
             case Direction.Left:
@@ -38,6 +34,14 @@ export class Player extends BoardToken {
                 this.slice = this.theme.playerDown[this.walkFrame];
                 break;
         }
+    }
+
+    winAnimation() {
+        this.slice = this.theme.playerWin;
+    }
+
+    hmmAnimation() {
+        this.slice = this.theme.playerHmm;
     }
 
     private doWalk(newX: number, newY: number, orientation: Orientation) {
@@ -69,30 +73,40 @@ export class Player extends BoardToken {
         return result;
     }
 
-    tryPush(direction: Direction) {
+    tryPush(direction: Direction, preventRestricted: boolean) {
         const pos = this.getPosition();
         const offset = directionToOffset(direction);
         const newX = pos.x + offset.x;
         const newY = pos.y + offset.y;
         let result = false;
+        let restricted = false;
 
         const tokens = this.board.tokensForTile(newX, newY);
 
         for (const token of tokens) {
             if (token instanceof Crate) {
-                if (token.tryPush(direction)) {
+                const pushResult = token.tryPush(direction, preventRestricted);
+
+                if (pushResult === PushPullResult.Ok) {
                     this.doWalk(newX, newY, Orientation.Forward);
                     result = true;
+                } else if (pushResult === PushPullResult.Restricted) {
+                    restricted = true;
                 }
                 break;
             }
         }
 
-        this.walkAnimation(direction);
+        if (!restricted) {
+            this.walkAnimation(direction);
+        } else {
+            this.hmmAnimation();
+        }
+
         return result;
     }
 
-    tryPull(direction: Direction) {
+    tryPull(direction: Direction, preventRestricted: boolean) {
         const pos = this.getPosition();
         const offset = directionToOffset(direction);
         const crateX = pos.x - offset.x;
@@ -100,22 +114,32 @@ export class Player extends BoardToken {
         const newX = pos.x + offset.x;
         const newY = pos.y + offset.y;
         let result = false;
+        let restricted = false;
 
         const tokens = this.board.tokensForTile(crateX, crateY);
 
         if (this.isFree(newX, newY)) {
             for (const token of tokens) {
                 if (token instanceof Crate) {
-                    if (token.tryPull(this, direction)) {
+                    const pullResult = token.tryPull(this, direction, preventRestricted);
+
+                    if (pullResult === PushPullResult.Ok) {
                         this.doWalk(newX, newY, Orientation.Backward);
                         result = true;
+                    } else if (pullResult === PushPullResult.Restricted) {
+                        restricted = true;
                     }
                     break;
                 }
             }
         }
 
-        this.walkAnimation(oppositeDirection(direction));
+        if (!restricted) {
+            this.walkAnimation(oppositeDirection(direction));
+        } else {
+            this.hmmAnimation();
+        }
+
         return result;
     }
 }

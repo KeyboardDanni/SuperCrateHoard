@@ -5,6 +5,7 @@ import { centered } from "../../engine/util";
 import { GameSingleton } from "../singleton";
 import { makeMenuScene } from "../menu/menuscene";
 import { Focusable, FocusableScene } from "../global/focus";
+import { Preferences } from "../global/savedata";
 import { Board, BoardTileType } from "../board/board";
 import { BoardTokenType, Direction, TokenToSpawn } from "../board/token";
 import { Orientation, Player } from "./player";
@@ -60,6 +61,16 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
         this.board.x = centered(this.board.width * this.board.tileWidth, canvas.width);
         this.board.y = centered(this.board.height * this.board.tileHeight, canvas.height);
+
+        this.preferencesChanged(singleton.preferences);
+
+        scene.addEventHandler("preferencesChanged", (preferences) =>
+            this.preferencesChanged(preferences as Preferences)
+        );
+    }
+
+    private preferencesChanged(preferences: Preferences) {
+        this.board.getAnalysis().setAnalysisMode(preferences.analysis, preferences.analysisAction);
     }
 
     private makeTokens(board: Board, tokensToSpawn: TokenToSpawn[]) {
@@ -93,23 +104,25 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         return player.tryWalk(direction, orientation);
     }
 
-    private tryPush(direction: Direction) {
+    private tryPush(direction: Direction, preventRestricted: boolean) {
         const player = this.getPlayer();
 
         if (!player) return false;
 
-        return player.tryPush(direction);
+        return player.tryPush(direction, preventRestricted);
     }
 
-    private tryPull(direction: Direction) {
+    private tryPull(direction: Direction, preventRestricted: boolean) {
         const player = this.getPlayer();
 
         if (!player) return false;
 
-        return player.tryPull(direction);
+        return player.tryPull(direction, preventRestricted);
     }
 
-    private doAction(action: Action): boolean {
+    private doAction(action: Action, isRedo: boolean): boolean {
+        const preventRestricted = !isRedo && this.board.getAnalysis().shouldPreventRestricted();
+
         switch (action) {
             case Action.WalkLeft:
                 return this.tryWalk(Direction.Left);
@@ -120,13 +133,13 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
             case Action.WalkDown:
                 return this.tryWalk(Direction.Down);
             case Action.PushLeft:
-                return this.tryPush(Direction.Left);
+                return this.tryPush(Direction.Left, preventRestricted);
             case Action.PushRight:
-                return this.tryPush(Direction.Right);
+                return this.tryPush(Direction.Right, preventRestricted);
             case Action.PushUp:
-                return this.tryPush(Direction.Up);
+                return this.tryPush(Direction.Up, preventRestricted);
             case Action.PushDown:
-                return this.tryPush(Direction.Down);
+                return this.tryPush(Direction.Down, preventRestricted);
         }
     }
 
@@ -141,18 +154,18 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
             case Action.WalkDown:
                 return this.tryWalk(Direction.Up, Orientation.Backward);
             case Action.PushLeft:
-                return this.tryPull(Direction.Right);
+                return this.tryPull(Direction.Right, false);
             case Action.PushRight:
-                return this.tryPull(Direction.Left);
+                return this.tryPull(Direction.Left, false);
             case Action.PushUp:
-                return this.tryPull(Direction.Down);
+                return this.tryPull(Direction.Down, false);
             case Action.PushDown:
-                return this.tryPull(Direction.Up);
+                return this.tryPull(Direction.Up, false);
         }
     }
 
     private tryAction(action: Action): boolean {
-        if (this.doAction(action)) {
+        if (this.doAction(action, false)) {
             this.history.push(action);
 
             if (
@@ -195,7 +208,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
         const action = this.redoHistory[this.redoHistory.length - 1];
 
-        if (this.doAction(action)) {
+        if (this.doAction(action, true)) {
             this.redoHistory.pop();
             this.history.push(action);
             return true;
@@ -318,6 +331,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
                     break;
             }
 
+            this.board.getAnalysis().recomputeAnalysis();
             this.checkWinCondition(gameloop);
         }
 
