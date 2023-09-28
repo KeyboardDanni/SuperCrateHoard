@@ -166,14 +166,9 @@ export const OPTIONS_MAIN: Menu = {
             maxLines: 1,
             text: (_logic, gameloop) => {
                 const singleton = gameloop.singleton;
+                const strings = singleton.getLevelStrings();
 
-                const collection = singleton.levels[singleton.currentCollection];
-
-                if (!collection) {
-                    return "";
-                }
-
-                return `Levelset: ${collection.name}`;
+                return `Levelset: ${strings.collection}`;
             },
         },
         {
@@ -184,25 +179,9 @@ export const OPTIONS_MAIN: Menu = {
             maxLines: 1,
             text: (_logic, gameloop) => {
                 const singleton = gameloop.singleton;
+                const strings = singleton.getLevelStrings();
 
-                const collection = singleton.levels[singleton.currentCollection];
-
-                if (!collection) {
-                    return "";
-                }
-
-                const level = collection.levels[singleton.currentLevel];
-                let name = `Level ${singleton.currentLevel + 1}`;
-
-                if (!level) {
-                    return "";
-                }
-
-                if (level.name && level.name.length > 0) {
-                    name += `: ${level.name}`;
-                }
-
-                return name;
+                return strings.name;
             },
         },
         {
@@ -213,28 +192,9 @@ export const OPTIONS_MAIN: Menu = {
             maxLines: 2,
             text: (_logic, gameloop) => {
                 const singleton = gameloop.singleton;
+                const strings = singleton.getLevelStrings();
 
-                const collection = singleton.levels[singleton.currentCollection];
-
-                if (!collection) {
-                    return "";
-                }
-
-                const level = collection.levels[singleton.currentLevel];
-
-                if (!level) {
-                    return "";
-                }
-
-                let author = "Anonymous";
-
-                if (level.author && level.author.length > 0) {
-                    author = level.author;
-                } else if (collection.author.length > 0) {
-                    author = collection.author;
-                }
-
-                return `by ${author}`;
+                return `by ${strings.author}`;
             },
         },
     ],

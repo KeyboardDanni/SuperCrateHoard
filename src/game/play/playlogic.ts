@@ -1,6 +1,7 @@
 import { Gameloop } from "../../engine/gameloop";
 import { Picture } from "../../engine/graphics";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
+import { BMFont } from "../../engine/text";
 import { centered } from "../../engine/util";
 import { GameSingleton } from "../singleton";
 import { makeMenuScene } from "../menu/menuscene";
@@ -10,13 +11,16 @@ import { Board, BoardTileType } from "../board/board";
 import { BoardTokenType, Direction, TokenToSpawn } from "../board/token";
 import { Orientation, Player } from "./player";
 import { Crate } from "./crate";
-
-import * as gameAtlas32Json from "../../res/GameAtlas32.json";
 import { Confetti } from "./confetti";
 import { makePlayScene } from "./playscene";
 
+import * as gameAtlas32Json from "../../res/GameAtlas32.json";
+import * as fontDescriptor from "../../res/Pixel12x10_Outline.json";
+
 const game32Slices = gameAtlas32Json;
 
+const TITLE_MAX_WIDTH = 900;
+const TITLE_TIMER = 270;
 const FOCUS_PRIORITY_PLAY = 0;
 const WIN_FRAMES = 300;
 const WIN_FRAMES_SKIP = 40;
@@ -34,15 +38,19 @@ enum Action {
 
 export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     private picture: Picture = new Picture("res/GameAtlas32.png");
+    private font;
     private board: Board;
-    private action: string | null = null;
+    private inputName: string | null = null;
     private history: Action[] = [];
     private redoHistory: Action[] = [];
     private winTimer = 0;
     private confetti: Confetti | null = null;
+    private titleTimer = TITLE_TIMER;
 
     constructor(gameloop: Gameloop<GameSingleton>, scene: FocusableScene) {
         super(scene);
+
+        this.font = new BMFont(fontDescriptor);
 
         const singleton = gameloop.singleton;
         const collection = singleton.levels[singleton.currentCollection];
@@ -309,8 +317,8 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     }
 
     private gameActiveTick(gameloop: Gameloop<GameSingleton>) {
-        if (this.action) {
-            switch (this.action) {
+        if (this.inputName) {
+            switch (this.inputName) {
                 case "left":
                     this.tryAction(Action.WalkLeft) || this.tryAction(Action.PushLeft);
                     break;
@@ -331,11 +339,12 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
                     break;
             }
 
+            this.titleTimer = 0;
             this.board.getAnalysis().recomputeAnalysis();
             this.checkWinCondition(gameloop);
         }
 
-        this.action = null;
+        this.inputName = null;
     }
 
     focusTick(gameloop: Gameloop<GameSingleton>, scene: Scene): void {
@@ -345,10 +354,15 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
         const input = gameloop.input();
 
-        this.action = input.autoRepeatNewest(["left", "right", "up", "down", "undo", "redo"]);
+        this.inputName = input.autoRepeatNewest(["left", "right", "up", "down", "undo", "redo"]);
 
-        if (this.action === null && input.justPressed("menu")) {
+        if (input.justPressed("accept")) {
+            this.titleTimer = 0;
+        }
+
+        if (this.inputName === null && input.justPressed("menu")) {
             scene.pushEvent("openMenu");
+            this.titleTimer = 0;
         }
     }
 
@@ -359,16 +373,58 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
             this.gameWonTick(gameloop);
         }
 
+        if (this.titleTimer > 0) {
+            this.titleTimer--;
+        }
+
         this.keepActive(FOCUS_PRIORITY_PLAY);
     }
 
-    draw(gameloop: Gameloop, _scene: Scene, lerpTime: number): void {
+    draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, lerpTime: number): void {
         const renderer = gameloop.renderer();
 
         this.board.draw(renderer);
 
         if (this.confetti) {
             this.confetti.draw(renderer, lerpTime);
+        }
+        if (this.titleTimer > 0) {
+            const strings = gameloop.singleton.getLevelStrings();
+            const centerX = renderer.canvas().width / 2;
+            const centerY = renderer.canvas().height / 2;
+
+            renderer.drawRect(
+                0,
+                centerY - 48,
+                renderer.canvas().width,
+                96,
+                "rgb(255, 255, 255, 0.2)"
+            );
+
+            this.font.drawTextCentered(
+                renderer,
+                strings.collection,
+                centerX,
+                centerY - 36,
+                TITLE_MAX_WIDTH,
+                1
+            );
+            this.font.drawTextCentered(
+                renderer,
+                strings.name,
+                centerX,
+                centerY - 8,
+                TITLE_MAX_WIDTH,
+                1
+            );
+            this.font.drawTextCentered(
+                renderer,
+                `by ${strings.author}`,
+                centerX,
+                centerY + 20,
+                TITLE_MAX_WIDTH,
+                1
+            );
         }
     }
 }

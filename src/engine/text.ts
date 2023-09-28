@@ -184,4 +184,19 @@ export class BMFont {
             cursor.advance(space);
         }
     }
+
+    drawTextCentered(
+        renderer: Renderer,
+        text: string,
+        x: number,
+        y: number,
+        wrapWidth: number = Infinity,
+        maxLines = Number.MAX_SAFE_INTEGER
+    ) {
+        const textWidth = this.measureText(text);
+
+        x -= textWidth / 2;
+
+        this.drawText(renderer, text, x, y, wrapWidth, maxLines);
+    }
 }
