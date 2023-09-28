@@ -1,6 +1,10 @@
-import { Position } from "../../engine/util";
+import { Position, clamp, lerp } from "../../engine/util";
 import { Picture, PictureSlice, Renderer } from "../../engine/graphics";
 import { Board, BoardTileType } from "./board";
+
+const LERP_RATE = 0.2;
+const LAST_MOVE_RATE = 0.02;
+const LERP_JUMP_AHEAD_CAP = 0.15;
 
 export enum Direction {
     Left,
@@ -47,8 +51,13 @@ export enum BoardTokenType {
 }
 
 export class BoardToken {
-    private x: number = 0;
-    private y: number = 0;
+    private x;
+    private y;
+    private oldX;
+    private oldY;
+    private oldLerpTimer = 0;
+    private lerpTimer = 0;
+    private lastMoveTimer = 0;
     picture: Picture | null = null;
     slice: PictureSlice = new PictureSlice(0, 0, 0, 0);
     solid = true;
@@ -57,6 +66,8 @@ export class BoardToken {
     constructor(x: number, y: number, board: Board) {
         this.x = x;
         this.y = y;
+        this.oldX = x;
+        this.oldY = y;
         this.board = board;
     }
 
@@ -65,8 +76,26 @@ export class BoardToken {
     }
 
     setPosition(x: number, y: number) {
+        this.oldX = this.x;
+        this.oldY = this.y;
         this.x = x;
         this.y = y;
+        this.oldLerpTimer = 1;
+        this.lerpTimer = 1;
+        this.lastMoveTimer = 1;
+    }
+
+    lerpToPosition(x: number, y: number) {
+        // Speed up lerp if movement is rapid enough
+        const lerpTime = Math.max(this.lastMoveTimer, LERP_JUMP_AHEAD_CAP);
+        this.oldX = lerp(x, this.x, lerpTime);
+        this.oldY = lerp(y, this.y, lerpTime);
+
+        this.x = x;
+        this.y = y;
+        this.oldLerpTimer = 0;
+        this.lerpTimer = 0;
+        this.lastMoveTimer = 0;
     }
 
     getBoardPosition(): Position {
@@ -102,9 +131,27 @@ export class BoardToken {
         return this.isTileFree(x, y) && this.isTokenFree(x, y);
     }
 
-    draw(renderer: Renderer, targetX: number, targetY: number) {
+    lerpTick() {
+        this.oldLerpTimer = this.lerpTimer;
+        this.lerpTimer = clamp(this.lerpTimer + LERP_RATE, 0, 1);
+        this.lastMoveTimer = clamp(this.lastMoveTimer + LAST_MOVE_RATE, 0, 1);
+    }
+
+    draw(renderer: Renderer, frameLerp: number) {
+        if (!this.picture) {
+            return;
+        }
+
+        const targetPos = this.board.boardToWorldCoords(this.x, this.y);
+        const oldPos = this.board.boardToWorldCoords(this.oldX, this.oldY);
+
+        const lerpedLerp = lerp(this.oldLerpTimer, this.lerpTimer, frameLerp);
+        const easing = Math.pow(lerpedLerp, 0.3);
+        const x = lerp(oldPos.x, targetPos.x, easing);
+        const y = lerp(oldPos.y, targetPos.y, easing);
+
         if (this.picture) {
-            renderer.drawSprite(this.picture, this.slice, targetX, targetY);
+            renderer.drawSprite(this.picture, this.slice, x, y);
         }
     }
 }

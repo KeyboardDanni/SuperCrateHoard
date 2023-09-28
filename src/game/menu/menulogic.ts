@@ -345,7 +345,7 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
         renderer.context().restore();
     }
 
-    private drawPreviewBoard(renderer: Renderer) {
+    private drawPreviewBoard(renderer: Renderer, lerpTime: number) {
         if (!this.previewBoard) {
             return;
         }
@@ -370,7 +370,7 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
         this.previewBoard.y =
             PREVIEW_CENTER_Y - (this.previewBoard.height * this.previewBoard.tileHeight) / 2;
 
-        this.previewBoard.draw(renderer);
+        this.previewBoard.draw(renderer, lerpTime);
     }
 
     drawTicker(renderer: Renderer) {
@@ -387,7 +387,7 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
         this.font.drawText(renderer, ticker, offset, renderer.canvas().height - 24);
     }
 
-    draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, _lerpTime: number) {
+    draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, lerpTime: number) {
         const renderer = gameloop.renderer();
         const width = renderer.canvas().width;
         const singleton = gameloop.singleton;
@@ -399,7 +399,7 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             24
         );
 
-        this.drawPreviewBoard(renderer);
+        this.drawPreviewBoard(renderer, lerpTime);
         this.drawCollectionSelector(renderer, singleton);
         this.drawLevelSelector(renderer, singleton);
         this.drawTicker(renderer);

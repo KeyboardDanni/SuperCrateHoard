@@ -373,6 +373,8 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
             this.gameWonTick(gameloop);
         }
 
+        this.board.lerpTick();
+
         if (this.titleTimer > 0) {
             this.titleTimer--;
         }
@@ -383,7 +385,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
     draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, lerpTime: number): void {
         const renderer = gameloop.renderer();
 
-        this.board.draw(renderer);
+        this.board.draw(renderer, lerpTime);
 
         if (this.confetti) {
             this.confetti.draw(renderer, lerpTime);

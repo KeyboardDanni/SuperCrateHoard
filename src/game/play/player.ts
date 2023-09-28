@@ -46,7 +46,7 @@ export class Player extends BoardToken {
 
     private doWalk(newX: number, newY: number, orientation: Orientation) {
         this.board.moveToken(this, newX, newY);
-        this.setPosition(newX, newY);
+        this.lerpToPosition(newX, newY);
 
         if (orientation === Orientation.Forward) {
             this.walkFrame = (this.walkFrame + 1) % 4;

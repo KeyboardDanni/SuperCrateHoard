@@ -299,11 +299,24 @@ export class Board {
         this.dirty = true;
     }
 
+    boardToWorldCoords(x: number, y: number): Position {
+        const worldX = x * this.tileWidth + this.x;
+        const worldY = y * this.tileHeight + this.y;
+
+        return { x: worldX, y: worldY };
+    }
+
     getAnalysis() {
         return this.analysis;
     }
 
-    draw(renderer: Renderer) {
+    lerpTick() {
+        for (const token of this.tokens) {
+            token.lerpTick();
+        }
+    }
+
+    draw(renderer: Renderer, lerpTime: number) {
         if (this.dirty) {
             this.updateDisplayTiles();
         }
@@ -328,11 +341,7 @@ export class Board {
         }
 
         for (const token of this.tokens) {
-            const pos = token.getPosition();
-            const x = pos.x * this.tileWidth + this.x;
-            const y = pos.y * this.tileHeight + this.y;
-
-            token.draw(renderer, x, y);
+            token.draw(renderer, lerpTime);
         }
     }
 }

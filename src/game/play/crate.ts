@@ -32,7 +32,7 @@ export class Crate extends BoardToken {
             }
 
             this.board.moveToken(this, newX, newY);
-            this.setPosition(newX, newY);
+            this.lerpToPosition(newX, newY);
 
             const tile = this.board.tile(newX, newY);
             this.slice = this.theme.crate[tile === BoardTileType.Dropzone ? 1 : 0];
@@ -66,7 +66,7 @@ export class Crate extends BoardToken {
         }
 
         this.board.moveToken(this, newX, newY);
-        this.setPosition(newX, newY);
+        this.lerpToPosition(newX, newY);
 
         const tile = this.board.tile(newX, newY);
         this.slice = this.theme.crate[tile === BoardTileType.Dropzone ? 1 : 0];
