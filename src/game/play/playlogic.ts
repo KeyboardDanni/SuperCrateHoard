@@ -393,14 +393,6 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
             const centerX = renderer.canvas().width / 2;
             const centerY = renderer.canvas().height / 2;
 
-            renderer.drawRect(
-                0,
-                centerY - 48,
-                renderer.canvas().width,
-                96,
-                "rgb(255, 255, 255, 0.2)"
-            );
-
             this.font.drawTextCentered(
                 renderer,
                 strings.collection,
