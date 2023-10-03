@@ -73,6 +73,22 @@ export class GameSingleton {
         return newStrings;
     }
 
+    getCurrentLevel() {
+        const collection = this.levels[this.currentCollection];
+
+        if (!collection) {
+            return null;
+        }
+
+        const level = collection.levels[this.currentLevel];
+
+        if (!level) {
+            return null;
+        }
+
+        return level;
+    }
+
     getFinishedLevels() {
         const collection = this.levels[this.currentCollection];
 

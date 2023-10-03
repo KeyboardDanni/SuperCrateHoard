@@ -139,11 +139,7 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             return;
         }
 
-        const collection = singleton.levels[singleton.currentCollection];
-
-        if (!collection) return;
-
-        const level = collection.levels[singleton.currentLevel];
+        const level = singleton.getCurrentLevel();
 
         if (!level) return;
 
@@ -221,13 +217,13 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             this.picture,
             titleSlices.arrowLeft,
             TEXT_LEFT_ALIGN_UPPER + 206 - bob,
-            198
+            194
         );
         renderer.drawSprite(
             this.picture,
             titleSlices.arrowRight,
             TEXT_LEFT_ALIGN_UPPER + 230 + bob,
-            198
+            194
         );
 
         if (collection) {

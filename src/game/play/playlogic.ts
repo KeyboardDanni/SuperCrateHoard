@@ -53,11 +53,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         this.font = new BMFont(fontDescriptor);
 
         const singleton = gameloop.singleton;
-        const collection = singleton.levels[singleton.currentCollection];
-
-        if (!collection) throw new Error("Missing collection");
-
-        const level = collection.levels[singleton.currentLevel];
+        const level = singleton.getCurrentLevel();
 
         if (!level) throw new Error("Missing level");
 
@@ -72,6 +68,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
         this.preferencesChanged(singleton.preferences);
 
+        scene.addEventHandler("hideTitle", () => this.hideTitle());
         scene.addEventHandler("preferencesChanged", (preferences) =>
             this.preferencesChanged(preferences as Preferences)
         );
@@ -79,6 +76,10 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
     private preferencesChanged(preferences: Preferences) {
         this.board.getAnalysis().setAnalysisMode(preferences.analysis, preferences.analysisAction);
+    }
+
+    private hideTitle() {
+        this.titleTimer = 0;
     }
 
     private makeTokens(board: Board, tokensToSpawn: TokenToSpawn[]) {
@@ -339,12 +340,16 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
                     break;
             }
 
-            this.titleTimer = 0;
+            this.hideTitle();
             this.board.getAnalysis().recomputeAnalysis();
             this.checkWinCondition(gameloop);
         }
 
         this.inputName = null;
+    }
+
+    getBoard() {
+        return this.board;
     }
 
     focusTick(gameloop: Gameloop<GameSingleton>, scene: Scene): void {
@@ -357,7 +362,7 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         this.inputName = input.autoRepeatNewest(["left", "right", "up", "down", "undo", "redo"]);
 
         if (input.justPressed("accept")) {
-            this.titleTimer = 0;
+            this.hideTitle();
         }
 
         if (this.inputName === null && input.justPressed("menu")) {
@@ -377,6 +382,10 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
 
         if (this.titleTimer > 0) {
             this.titleTimer--;
+
+            if (this.titleTimer <= 0) {
+                this.getScene().pushEvent("titleTimedOut");
+            }
         }
 
         this.keepActive(FOCUS_PRIORITY_PLAY);

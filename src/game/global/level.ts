@@ -6,6 +6,8 @@ export class Level {
     author: string | null = null;
     description: string | null = null;
     tiles: string[] = [];
+    @Type(() => Tutorial)
+    tutorial?: Tutorial;
 
     measureDimensions(): Position {
         let width = 0;
@@ -26,4 +28,20 @@ export class LevelCollection {
     saveId: string = "";
     @Type(() => Level)
     levels: Level[] = [];
+}
+
+export class Tutorial {
+    @Type(() => Dialogue)
+    dialogues: Dialogue[] = [];
+}
+
+export class Dialogue {
+    text: string = "";
+    @Type(() => Arrow)
+    arrows?: Arrow[];
+}
+
+export class Arrow {
+    x = 0;
+    y = 0;
 }
