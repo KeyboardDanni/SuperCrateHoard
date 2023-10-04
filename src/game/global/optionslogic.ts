@@ -10,6 +10,7 @@ import { OPTIONS_MAIN } from "./optionsmenus";
 
 import * as titleAtlasJson from "../../res/TitleAtlas.json";
 import * as fontDescriptor from "../../res/Pixel12x10.json";
+import { Preferences } from "./savedata";
 
 const titleSlices = titleAtlasJson;
 
@@ -27,23 +28,32 @@ export interface Menu {
     labels: LabelItem[];
 }
 
-interface MenuHistoryEntry {
-    menu: Menu;
-    index: number;
-}
+export type TextLabelFunc = (logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => string;
 
-interface LabelItem {
+export interface LabelItem {
     x: number;
     y: number;
-    text: (logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => string;
+    text: TextLabelFunc;
     alignment: TextAlignment;
     maxWidth: number;
     maxLines: number;
 }
 
-interface ButtonItem extends LabelItem {
-    onActivate: (logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => void;
-    onAdjust: (offset: number, logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => void;
+export type OnActivateFunc = (logic: OptionsLogic, gameloop: Gameloop<GameSingleton>) => void;
+export type OnAdjustFunc = (
+    offset: number,
+    logic: OptionsLogic,
+    gameloop: Gameloop<GameSingleton>
+) => void;
+
+export interface ButtonItem extends LabelItem {
+    onActivate: OnActivateFunc;
+    onAdjust: OnAdjustFunc;
+}
+
+interface MenuHistoryEntry {
+    menu: Menu;
+    index: number;
 }
 
 export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
@@ -54,14 +64,25 @@ export class OptionsLogic extends Focusable implements TickLogic, DrawLogic {
     private currentMenu = OPTIONS_MAIN;
     private menuStack: MenuHistoryEntry[] = [];
 
-    constructor(scene: FocusableScene) {
+    constructor(gameloop: Gameloop<GameSingleton>, scene: FocusableScene) {
         super(scene);
 
         this.font = new BMFont(fontDescriptor);
 
+        this.preferencesChanged(gameloop, gameloop.singleton.preferences);
+
         scene.addEventHandler("openMenu", () => {
             this.open();
         });
+        scene.addEventHandler("preferencesChanged", (preferences) =>
+            this.preferencesChanged(gameloop, preferences as Preferences)
+        );
+    }
+
+    private preferencesChanged(gameloop: Gameloop, preferences: Preferences) {
+        const input = gameloop.input();
+
+        input.setDefaultRepeatRate(preferences.repeatDelay, preferences.repeatRate);
     }
 
     open() {

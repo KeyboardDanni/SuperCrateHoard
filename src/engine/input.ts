@@ -8,6 +8,8 @@ export class Input {
     private heldKeys: { [id: string]: number } = {};
     private actions: { [id: string]: Action } = {};
     private newKeysThisFrame = 1;
+    private repeatDelay = 20;
+    private repeatRate = 4;
 
     constructor() {
         document.addEventListener("keydown", (event) => this.keyDownHandler(event));
@@ -109,7 +111,7 @@ export class Input {
     newestHeld(names: string[]) {
         let best = null;
         let bestHeld = Number.MAX_SAFE_INTEGER;
-        let bestOrder = Number.MAX_SAFE_INTEGER;
+        let bestOrder = Number.MIN_SAFE_INTEGER;
 
         for (const name of names) {
             const action = this.actions[name];
@@ -121,7 +123,7 @@ export class Input {
             const held = action.timeHeld;
             const order = action.sameFrameOrdering;
 
-            if ((held > 0 && held < bestHeld) || (held === bestHeld && order < bestOrder)) {
+            if ((held > 0 && held < bestHeld) || (held === bestHeld && order > bestOrder)) {
                 best = name;
                 bestHeld = held;
                 bestOrder = order;
@@ -131,22 +133,37 @@ export class Input {
         return best;
     }
 
-    autoRepeat(name: string, startDelay: number = 15, repeatDelay: number = 3) {
-        const time = this.timeHeld(name);
+    setDefaultRepeatRate(delay: number, rate: number) {
+        for (const action of Object.values(this.actions)) {
+            if (action.timeHeld >= this.repeatDelay) {
+                // Adjust time held to reset the repeat cycle
+                action.timeHeld -= (action.timeHeld - this.repeatDelay) % rate;
+                // Adjust time held to match the new start delay
+                action.timeHeld = Math.max(1, action.timeHeld + (delay - this.repeatDelay));
+            }
+        }
 
-        return time === 1 || (time >= startDelay && (time - startDelay) % repeatDelay === 0);
+        this.repeatDelay = delay;
+        this.repeatRate = rate;
     }
 
-    autoRepeatNewest(names: string[], startDelay: number = 15, repeatDelay: number = 3) {
+    autoRepeat(name: string, startDelay: number = -1, repeatRate: number = -1) {
+        const time = this.timeHeld(name);
+
+        if (startDelay === -1) startDelay = this.repeatDelay;
+        if (repeatRate === -1) repeatRate = this.repeatRate;
+
+        return time === 1 || (time >= startDelay && (time - startDelay) % repeatRate === 0);
+    }
+
+    autoRepeatNewest(names: string[], startDelay: number = -1, repeatRate: number = -1) {
         const newestHeld = this.newestHeld(names);
 
         if (!newestHeld) {
             return null;
         }
 
-        const time = this.timeHeld(newestHeld);
-        const active =
-            time === 1 || (time >= startDelay && (time - startDelay) % repeatDelay === 0);
+        const active = this.autoRepeat(newestHeld, startDelay, repeatRate);
 
         return active ? newestHeld : null;
     }

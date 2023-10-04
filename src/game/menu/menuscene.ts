@@ -1,9 +1,11 @@
 import { BgDrawer } from "../global/bgdrawer";
+import { Gameloop } from "../../engine/gameloop";
 import { Input } from "../../engine/input";
 import { MenuLogic } from "./menulogic";
 import { LevelFetchLogic } from "./levelfetchlogic";
 import { FocusableScene } from "../global/focus";
 import { OptionsLogic } from "../global/optionslogic";
+import { GameSingleton } from "../singleton";
 
 class MenuScene extends FocusableScene {
     levelFetchLogic: LevelFetchLogic;
@@ -19,14 +21,15 @@ class MenuScene extends FocusableScene {
     }
 }
 
-export function makeMenuScene(input: Input) {
+export function makeMenuScene(gameloop: Gameloop<GameSingleton>) {
     const bgDrawer = new BgDrawer(0.25);
     const levelFetchLogic = new LevelFetchLogic();
 
+    const input = gameloop.input();
     const scene = new MenuScene(input, levelFetchLogic);
 
     const menuLogic = new MenuLogic(scene);
-    const optionsLogic = new OptionsLogic(scene);
+    const optionsLogic = new OptionsLogic(gameloop, scene);
 
     scene.addDrawLoaderLogic(bgDrawer);
     scene.addLoaderLogic(levelFetchLogic);

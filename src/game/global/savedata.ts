@@ -58,11 +58,15 @@ export class SaveData {
 
 export class Preferences {
     version: number;
+    repeatDelay: number;
+    repeatRate: number;
     analysis: AnalysisMode;
     analysisAction: AnalysisActionMode;
 
     constructor() {
         this.version = VERSION_PREFERENCES;
+        this.repeatDelay = 20;
+        this.repeatRate = 4;
         this.analysis = AnalysisMode.None;
         this.analysisAction = AnalysisActionMode.Show;
     }

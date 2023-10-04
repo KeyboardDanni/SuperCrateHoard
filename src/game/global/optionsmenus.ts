@@ -1,7 +1,13 @@
+import { clamp } from "../../engine/util";
 import { makePlayScene } from "../play/playscene";
 import { AnalysisActionMode, AnalysisMode } from "../board/analysis";
 import { makeMenuScene } from "../menu/menuscene";
-import { Menu, TextAlignment } from "./optionslogic";
+import { ButtonItem, Menu, OnAdjustFunc, TextAlignment, TextLabelFunc } from "./optionslogic";
+
+const REPEAT_DELAY_MIN = 15;
+const REPEAT_DELAY_MAX = 60;
+const REPEAT_RATE_MIN = 2;
+const REPEAT_RATE_MAX = 15;
 
 function analysisName(analysisMode: AnalysisMode) {
     switch (analysisMode) {
@@ -27,57 +33,106 @@ function analysisActionName(analysisAction: AnalysisActionMode) {
     }
 }
 
+function preferenceChoice(
+    x: number,
+    y: number,
+    textFunc: TextLabelFunc,
+    onAdjustFunc: OnAdjustFunc
+): ButtonItem {
+    return {
+        x: x,
+        y: y,
+        text: (logic, gameloop) => {
+            return textFunc(logic, gameloop);
+        },
+        alignment: TextAlignment.Left,
+        maxWidth: -1,
+        maxLines: 1,
+        onActivate: () => {},
+        onAdjust: (amount, logic, gameloop) => {
+            onAdjustFunc(amount, logic, gameloop);
+
+            const prefs = gameloop.singleton.preferences;
+            logic.getScene().pushEvent("preferencesChanged", prefs);
+            prefs.toLocalStorage();
+        },
+    };
+}
+
 export const OPTIONS_SETTINGS: Menu = {
     width: 640,
-    height: 192,
+    height: 256,
     buttons: [
-        {
-            x: 64,
-            y: 64,
-            text: (_logic, gameloop) => {
+        preferenceChoice(
+            64,
+            64,
+            (_logic, gameloop) => {
+                const prefs = gameloop.singleton.preferences;
+                const value = prefs.repeatDelay;
+
+                return `Key Repeat Delay: ${value}`;
+            },
+            (amount, _logic, gameloop) => {
+                const prefs = gameloop.singleton.preferences;
+                prefs.repeatDelay = clamp(
+                    prefs.repeatDelay + amount,
+                    REPEAT_DELAY_MIN,
+                    REPEAT_DELAY_MAX
+                );
+            }
+        ),
+        preferenceChoice(
+            64,
+            96,
+            (_logic, gameloop) => {
+                const prefs = gameloop.singleton.preferences;
+                const value = prefs.repeatRate;
+
+                return `Key Repeat Rate: ${value}`;
+            },
+            (amount, _logic, gameloop) => {
+                const prefs = gameloop.singleton.preferences;
+                prefs.repeatRate = clamp(
+                    prefs.repeatRate + amount,
+                    REPEAT_RATE_MIN,
+                    REPEAT_RATE_MAX
+                );
+            }
+        ),
+        preferenceChoice(
+            64,
+            128,
+            (_logic, gameloop) => {
                 const prefs = gameloop.singleton.preferences;
                 const name = analysisName(prefs.analysis);
 
                 return `Deadlock Analysis: ${name}`;
             },
-            alignment: TextAlignment.Left,
-            maxWidth: -1,
-            maxLines: 1,
-            onActivate: () => {},
-            onAdjust: (amount, logic, gameloop) => {
+            (amount, _logic, gameloop) => {
                 const prefs = gameloop.singleton.preferences;
                 prefs.analysis =
                     (prefs.analysis + AnalysisMode.EnumMax + amount) % AnalysisMode.EnumMax;
-                logic.getScene().pushEvent("preferencesChanged", prefs);
-                prefs.toLocalStorage();
-            },
-        },
-        {
-            x: 64,
-            y: 96,
-            text: (_logic, gameloop) => {
+            }
+        ),
+        preferenceChoice(
+            64,
+            160,
+            (_logic, gameloop) => {
                 const prefs = gameloop.singleton.preferences;
                 const name = analysisActionName(prefs.analysisAction);
 
                 return `Analysis Action: ${name}`;
             },
-            alignment: TextAlignment.Left,
-            maxWidth: -1,
-            maxLines: 1,
-            onActivate: () => {},
-            onAdjust: (amount, logic, gameloop) => {
+            (amount, _logic, gameloop) => {
                 const prefs = gameloop.singleton.preferences;
                 prefs.analysisAction =
                     (prefs.analysisAction + AnalysisActionMode.EnumMax + amount) %
                     AnalysisActionMode.EnumMax;
-                logic.getScene().pushEvent("preferencesChanged", prefs);
-                prefs.toLocalStorage();
-            },
-        },
-
+            }
+        ),
         {
             x: 0,
-            y: 160,
+            y: 224,
             text: () => "Back",
             alignment: TextAlignment.Center,
             maxWidth: -1,
@@ -151,7 +206,7 @@ export const OPTIONS_MAIN: Menu = {
             maxLines: 1,
             onActivate: (_logic, gameloop) => {
                 gameloop.setScene(() => {
-                    return makeMenuScene(gameloop.input());
+                    return makeMenuScene(gameloop);
                 });
             },
             onAdjust: () => {},

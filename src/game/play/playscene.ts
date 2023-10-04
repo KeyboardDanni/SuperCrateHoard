@@ -15,7 +15,7 @@ export function makePlayScene(gameloop: Gameloop<GameSingleton>) {
 
     const playLogic = new PlayLogic(gameloop, scene);
     const tutorialLogic = new TutorialLogic(scene, gameloop.singleton, playLogic.getBoard());
-    const optionsLogic = new OptionsLogic(scene);
+    const optionsLogic = new OptionsLogic(gameloop, scene);
 
     scene.addDrawLoaderLogic(bgDrawer);
     scene.addLogic(bgDrawer);

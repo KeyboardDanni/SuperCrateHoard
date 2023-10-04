@@ -39,7 +39,7 @@ window.onload = function init() {
     input.addAction("redo", ["KeyX"]);
 
     gameloop.setScene(() => {
-        return makeMenuScene(gameloop.input());
+        return makeMenuScene(gameloop);
     });
 
     gameloop.run();

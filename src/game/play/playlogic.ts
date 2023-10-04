@@ -280,9 +280,9 @@ export class PlayLogic extends Focusable implements TickLogic, DrawLogic {
         return true;
     }
 
-    private goToMenu(gameloop: Gameloop) {
+    private goToMenu(gameloop: Gameloop<GameSingleton>) {
         gameloop.setScene(() => {
-            return makeMenuScene(gameloop.input());
+            return makeMenuScene(gameloop);
         });
     }
 
