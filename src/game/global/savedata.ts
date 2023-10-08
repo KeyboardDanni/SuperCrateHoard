@@ -1,5 +1,6 @@
 import { plainToClass } from "class-transformer";
 import { AnalysisActionMode, AnalysisMode } from "../../game/board/analysis";
+import { BackgroundMovementMode } from "./bgdrawer";
 
 const VERSION_SAVEDATA = 1;
 const VERSION_PREFERENCES = 1;
@@ -60,6 +61,7 @@ export class Preferences {
     version: number;
     repeatDelay: number;
     repeatRate: number;
+    backgroundMovement: BackgroundMovementMode;
     analysis: AnalysisMode;
     analysisAction: AnalysisActionMode;
 
@@ -67,6 +69,7 @@ export class Preferences {
         this.version = VERSION_PREFERENCES;
         this.repeatDelay = 20;
         this.repeatRate = 4;
+        this.backgroundMovement = BackgroundMovementMode.Full;
         this.analysis = AnalysisMode.None;
         this.analysisAction = AnalysisActionMode.Show;
     }

@@ -22,12 +22,12 @@ class MenuScene extends FocusableScene {
 }
 
 export function makeMenuScene(gameloop: Gameloop<GameSingleton>) {
-    const bgDrawer = new BgDrawer(0.25);
     const levelFetchLogic = new LevelFetchLogic();
 
     const input = gameloop.input();
     const scene = new MenuScene(input, levelFetchLogic);
 
+    const bgDrawer = new BgDrawer(gameloop, scene, 0.25);
     const menuLogic = new MenuLogic(scene);
     const optionsLogic = new OptionsLogic(gameloop, scene);
 

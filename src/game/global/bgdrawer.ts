@@ -3,7 +3,8 @@ import { Gameloop } from "../../engine/gameloop";
 import { DrawLogic, Scene, TickLogic } from "../../engine/scene";
 import { lerp } from "../../engine/util";
 import * as gameAtlasJson from "../../res/GameAtlas32.json";
-import { GameSingleton } from "~game/singleton";
+import { GameSingleton } from "../singleton";
+import { Preferences } from "./savedata";
 
 const slices = gameAtlasJson;
 
@@ -12,14 +13,49 @@ const BG_CRATE_DENSITY = 0.3;
 const OFFSET_DARK_SQUARE = 1;
 const OFFSET_CRATE_SQUARE = 2;
 
+export const enum BackgroundMovementMode {
+    Full,
+    Reduced,
+    Off,
+    EnumMax,
+}
+
 export class BgDrawer implements TickLogic, DrawLogic {
     private image;
     private canvas: OffscreenCanvas | null = null;
+    private movementMode: BackgroundMovementMode;
     scrollSpeed: number;
+    decelRate: number;
+    decelTime: number;
 
-    constructor(scrollSpeed: number) {
-        this.scrollSpeed = scrollSpeed;
+    constructor(
+        gameloop: Gameloop<GameSingleton>,
+        scene: Scene,
+        scrollSpeed: number,
+        decelRate: number = 0,
+        decelTime: number = 0
+    ) {
         this.image = new Picture("res/GameAtlas32.png");
+
+        this.movementMode = gameloop.singleton.preferences.backgroundMovement;
+
+        if (this.movementMode !== BackgroundMovementMode.Full) {
+            this.scrollSpeed = scrollSpeed - decelRate * decelTime;
+            this.decelRate = 0;
+            this.decelTime = 0;
+        } else {
+            this.scrollSpeed = scrollSpeed;
+            this.decelRate = decelRate;
+            this.decelTime = decelTime;
+        }
+
+        scene.addEventHandler("preferencesChanged", (preferences) =>
+            this.preferencesChanged(preferences as Preferences)
+        );
+    }
+
+    private preferencesChanged(preferences: Preferences) {
+        this.movementMode = preferences.backgroundMovement;
     }
 
     createCanvas() {
@@ -78,6 +114,10 @@ export class BgDrawer implements TickLogic, DrawLogic {
     tick(gameloop: Gameloop<GameSingleton>, _scene: Scene) {
         const singleton = gameloop.singleton;
 
+        if (this.decelTime > 0) {
+            this.decelTime--;
+            this.scrollSpeed = Math.max(0, this.scrollSpeed - this.decelRate);
+        }
         singleton.bgScroll += this.scrollSpeed;
     }
 
@@ -92,7 +132,12 @@ export class BgDrawer implements TickLogic, DrawLogic {
         const gridWidth = Math.ceil(width / this.canvas.width) + 1;
         const gridHeight = Math.ceil(height / this.canvas.height) + 1;
         const context = renderer.context();
-        const scroll = lerp(singleton.bgScroll - this.scrollSpeed, singleton.bgScroll, lerpTime);
+        let scroll = 0;
+
+        if (this.movementMode !== BackgroundMovementMode.Off) {
+            scroll = lerp(singleton.bgScroll - this.scrollSpeed, singleton.bgScroll, lerpTime);
+        }
+
         const scrollWrapped = scroll % this.canvas.height;
 
         for (let y = 0; y < gridHeight; ++y) {

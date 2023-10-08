@@ -3,11 +3,25 @@ import { makePlayScene } from "../play/playscene";
 import { AnalysisActionMode, AnalysisMode } from "../board/analysis";
 import { makeMenuScene } from "../menu/menuscene";
 import { ButtonItem, Menu, OnAdjustFunc, TextAlignment, TextLabelFunc } from "./optionslogic";
+import { BackgroundMovementMode } from "./bgdrawer";
 
 const REPEAT_DELAY_MIN = 15;
 const REPEAT_DELAY_MAX = 60;
 const REPEAT_RATE_MIN = 2;
 const REPEAT_RATE_MAX = 15;
+
+function backgroundMovementName(backgroundMovement: BackgroundMovementMode) {
+    switch (backgroundMovement) {
+        case BackgroundMovementMode.Full:
+            return "Full";
+        case BackgroundMovementMode.Reduced:
+            return "Reduced";
+        case BackgroundMovementMode.Off:
+            return "Off";
+        default:
+            throw new Error("Bad enum");
+    }
+}
 
 function analysisName(analysisMode: AnalysisMode) {
     switch (analysisMode) {
@@ -61,7 +75,7 @@ function preferenceChoice(
 
 export const OPTIONS_SETTINGS: Menu = {
     width: 640,
-    height: 256,
+    height: 288,
     buttons: [
         preferenceChoice(
             64,
@@ -104,6 +118,22 @@ export const OPTIONS_SETTINGS: Menu = {
             128,
             (_logic, gameloop) => {
                 const prefs = gameloop.singleton.preferences;
+                const name = backgroundMovementName(prefs.backgroundMovement);
+
+                return `Background Movement: ${name}`;
+            },
+            (amount, _logic, gameloop) => {
+                const prefs = gameloop.singleton.preferences;
+                prefs.backgroundMovement =
+                    (prefs.backgroundMovement + BackgroundMovementMode.EnumMax + amount) %
+                    BackgroundMovementMode.EnumMax;
+            }
+        ),
+        preferenceChoice(
+            64,
+            160,
+            (_logic, gameloop) => {
+                const prefs = gameloop.singleton.preferences;
                 const name = analysisName(prefs.analysis);
 
                 return `Deadlock Analysis: ${name}`;
@@ -116,7 +146,7 @@ export const OPTIONS_SETTINGS: Menu = {
         ),
         preferenceChoice(
             64,
-            160,
+            192,
             (_logic, gameloop) => {
                 const prefs = gameloop.singleton.preferences;
                 const name = analysisActionName(prefs.analysisAction);
@@ -132,7 +162,7 @@ export const OPTIONS_SETTINGS: Menu = {
         ),
         {
             x: 0,
-            y: 224,
+            y: 256,
             text: () => "Back",
             alignment: TextAlignment.Center,
             maxWidth: -1,

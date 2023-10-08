@@ -9,10 +9,9 @@ import { TutorialLogic } from "./tutoriallogic";
 export class PlayScene extends FocusableScene {}
 
 export function makePlayScene(gameloop: Gameloop<GameSingleton>) {
-    const bgDrawer = new BgDrawer(0.125);
-
     const scene = new PlayScene(gameloop.input());
 
+    const bgDrawer = new BgDrawer(gameloop, scene, 2.125, 0.025, 80);
     const playLogic = new PlayLogic(gameloop, scene);
     const tutorialLogic = new TutorialLogic(scene, gameloop.singleton, playLogic.getBoard());
     const optionsLogic = new OptionsLogic(gameloop, scene);

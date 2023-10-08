@@ -10,6 +10,7 @@ import { Board, BoardTileType } from "../board/board";
 import { BoardToken, BoardTokenType, TokenToSpawn } from "../board/token";
 import { Level } from "../global/level";
 import { PictureSlicePair } from "../global/theme";
+import { AUTHOR_STRING, GAME_VERSION } from "../version";
 
 import * as titleAtlasJson from "../../res/TitleAtlas.json";
 import * as gameAtlas16Json from "../../res/GameAtlas16.json";
@@ -25,6 +26,9 @@ const game32Slices = gameAtlas32Json;
 
 const TEXT_LEFT_ALIGN_UPPER = 80;
 const TEXT_LEFT_ALIGN = 64;
+
+const LEVELSET_NAME_X = TEXT_LEFT_ALIGN_UPPER + 264;
+const LEVELSET_NAME_WIDTH = 550;
 
 const PREVIEW_RECT_X = 452;
 const PREVIEW_RECT_W = 492;
@@ -204,27 +208,24 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             }
         }
 
+        const textWidth = this.font.measureText(name);
+        const scale = clamp(LEVELSET_NAME_WIDTH / 2 / textWidth, 0.5, 1.0);
+
         context.save();
         context.scale(2, 2);
 
-        this.font.drawText(renderer, `Levelset   ${name}`, TEXT_LEFT_ALIGN_UPPER / 2, 96);
+        this.font.drawText(renderer, `Levelset`, TEXT_LEFT_ALIGN_UPPER / 2, 96);
+
+        context.scale(scale, 1);
+
+        this.font.drawText(renderer, name, LEVELSET_NAME_X / 2 / scale, 96);
 
         context.restore();
 
         const bob = Math.sin(this.ticks * 0.1) * 3;
 
-        renderer.drawSprite(
-            this.picture,
-            titleSlices.arrowLeft,
-            TEXT_LEFT_ALIGN_UPPER + 206 - bob,
-            194
-        );
-        renderer.drawSprite(
-            this.picture,
-            titleSlices.arrowRight,
-            TEXT_LEFT_ALIGN_UPPER + 230 + bob,
-            194
-        );
+        renderer.drawSprite(this.picture, titleSlices.arrowLeft, LEVELSET_NAME_X - 56 - bob, 194);
+        renderer.drawSprite(this.picture, titleSlices.arrowRight, LEVELSET_NAME_X - 32 + bob, 194);
 
         if (collection) {
             this.font.drawText(
@@ -383,10 +384,8 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
         this.font.drawText(renderer, ticker, offset, renderer.canvas().height - 24);
     }
 
-    draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, lerpTime: number) {
-        const renderer = gameloop.renderer();
+    drawTitle(renderer: Renderer) {
         const width = renderer.canvas().width;
-        const singleton = gameloop.singleton;
 
         renderer.drawSprite(
             this.picture,
@@ -395,6 +394,17 @@ export class MenuLogic extends Focusable implements TickLogic, DrawLogic {
             24
         );
 
+        const versionString = `Version ${GAME_VERSION}`;
+
+        this.font.drawTextRight(renderer, AUTHOR_STRING, width - 16, 16);
+        this.font.drawTextRight(renderer, versionString, width - 16, 40);
+    }
+
+    draw(gameloop: Gameloop<GameSingleton>, _scene: Scene, lerpTime: number) {
+        const renderer = gameloop.renderer();
+        const singleton = gameloop.singleton;
+
+        this.drawTitle(renderer);
         this.drawPreviewBoard(renderer, lerpTime);
         this.drawCollectionSelector(renderer, singleton);
         this.drawLevelSelector(renderer, singleton);
