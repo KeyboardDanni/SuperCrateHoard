@@ -177,7 +177,8 @@ export class Gameloop<SingletonType = unknown> {
         this.lastTick = updateStart;
 
         // Perform game logic catchup as necessary
-        while (this.tickQueue >= TICKRATE) {
+        //  (unless we need to go to the next scene)
+        while (this.tickQueue >= TICKRATE && this.pendingSceneFunc === null) {
             this.gameInput.newFrame();
             this.currentScene.tick(this);
 
